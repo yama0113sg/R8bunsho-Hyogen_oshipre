@@ -37,21 +37,20 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .tab small{display:block;font-size:11px}
 .tab b{display:block;font-size:13px;color:var(--ink)}
 .tab.on{background:linear-gradient(135deg,color-mix(in srgb,var(--g) 30%,transparent),color-mix(in srgb,var(--g2) 30%,transparent));border-color:var(--g)}
-.tab.past:not(.on){opacity:.7}
 .tab .done{color:var(--ok);font-weight:900}
 .tab .now{position:absolute;top:-7px;right:6px;font-size:10px;font-weight:900;background:var(--g);color:#2e0716;border-radius:999px;padding:0 6px}
 .pane{display:none}.pane.on{display:block}
 .goal{border:1px solid color-mix(in srgb,var(--g) 50%,transparent);background:rgba(255,158,199,.08);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:14px}
 .goal h2{margin:0 0 6px;font-size:17px}
 .goal ul{margin:0;padding-left:1.2em}
-.goal li{margin-bottom:6px}
-.goal li span{display:block}
-.goal .more{color:#d6d2ea;font-size:13px}
-.goal li.today{color:var(--g)}
-.goal li.today .must{font-weight:900}
-.goal li.today .must::after{content:"  ← 今日はここまでできればOK";font-size:12px}
-.goal li.past,.goal li.past .more{color:var(--sub)}
-.goal .ahead{margin:4px 0 0;font-size:12px;color:var(--sub)}
+.goal p{margin:0}
+.goal .due b{color:var(--g)}
+.goal .task{margin-top:4px}
+.goal .st{display:inline-block;font-size:12px;font-weight:900;border-radius:999px;padding:0 10px;background:rgba(255,255,255,.1);color:var(--ink)}
+.goal .st.ok{background:var(--ok);color:#06281a}
+.goal .st.warn{background:#ffd76a;color:#2e2300}
+.goal .ahead{margin-top:6px;font-size:12px;color:var(--sub)}
+.tab.fin:not(.on){opacity:.75}
 .tabnav{display:flex;justify-content:space-between;gap:10px;margin:4px 0 18px}
 .tabnav .btn{flex:1}
 .sbs{display:grid;gap:8px}
@@ -241,7 +240,7 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
 
   <div class="panel">
     <h2><span class="num">3</span>提出するテーマを決めよう</h2>
-    <p class="hint">上の1・2をふまえて、提出するテーマを書こう。11/18の締切の日に、用紙に写して出します。</p>
+    <p class="hint">上の1・2をふまえて、提出するテーマを書こう。11/17の締切の日に、用紙に写して出します。</p>
     <label for="fin">テーマ（決定版）</label>
     <input type="text" id="fin" data-k="fin" placeholder="例：サウナが大嫌いだった私が、ある冬の1回でハマった話">
     <label for="fttl">発表タイトル（決定版）</label>
@@ -633,33 +632,22 @@ const STRUCT={id:"s1",first:"構成で迷っているところは？",ph:"例：
   q:()=>`5分の構成（${theme()}）／つかみ：${data.st0||"？"}／本題①：${data.st1||"？"}／本題②：${data.st2||"？"}／本題③：${data.st3||"？"}／まとめ：${data.st4||"？"}`};
 renderTalk(document.getElementById("s1"),STRUCT,"coach");
 
-// タブ（日程と対応させる。その日の日付のタブを自動で開く）
+// タブ。日程は「締切」だけを示す（みんな一斉ではないので、締切までに終わればOK）
+// due：締切の日（なければ when に表示用のことば）／task：締切までにすること
 const TABS=[
-  // days：[日付, 回, 必ず（ここまでできればOK）, できたら（先取りOK）]
-  {id:"oshi",name:"推しを決める",days:[["2026-11-10","①","推しを1つに決めて、AIと問答して掘り下げる",""]],
+  {id:"oshi",name:"推しを決める",when:"はじめに",task:"推しを1つに決めて、AIと問答して掘り下げよう。",
     done:()=>has("oshi","why")},
-  {id:"q",name:"1年生への質問",days:[["2026-11-11","②","1年生への質問を2問作り、用紙で提出【締切】",""]],
+  {id:"q",name:"1年生への質問",due:"2026-11-11",paper:true,task:"1年生への質問を2問作って、用紙で提出する（提出は用紙なので、ここが空でもOK）。",
     done:()=>has("a_q1","a_q2")},
-  {id:"theme",name:"テーマを決める",days:[
-      ["2026-11-11","②","テーマを1文にまとめる（1年生役のつっこみまで）","切り口カードでテーマを尖らせる"],
-      ["2026-11-17","③ 1コマ目","切り口カードでテーマを尖らせ、決定版のテーマとタイトルを書く",""],
-      ["2026-11-18","④ 1コマ目","テーマを提出【締切】",""]],
+  {id:"theme",name:"テーマを決める",due:"2026-11-17",task:"決定版のテーマとタイトルを書いて、提出する。",
     done:()=>has("fin","fttl")},
-  {id:"kousei",name:"構成・絵コンテ",days:[
-      ["2026-11-17","③ 2コマ目","5分の構成（つかみ・本題①〜③・まとめ）を作る","絵コンテを作る"],
-      ["2026-11-18","④ 1コマ目","テーマを出したら、絵コンテを仕上げる",""]],
+  {id:"kousei",name:"構成・絵コンテ",due:"2026-11-18",task:"5分の構成と、スライドの絵コンテを作る。",
     done:()=>has("st0","st1","st2","st3","st4")&&cnt(10,i=>data["sbv"+i]||data["sbt"+i])>=6},
-  {id:"slide",name:"スライドを作る",days:[
-      ["2026-11-18","④ 2コマ目","絵コンテをもとに、スライドを作り始める",""],
-      ["2026-11-24","⑤","スライドをひととおり作る（アンケート結果は枠だけ）","ひとりで通して、時間を計ってみる"],
-      ["2026-11-25","⑥ 1コマ目","アンケート結果を入れて、スライドを仕上げる",""]],
+  {id:"slide",name:"スライドを作る",due:"2026-11-25",task:"アンケート結果も入れて、スライドを完成させる（できあがりチェックが全部つけばOK）。",
     done:()=>cnt(9,i=>data["ck"+i])===9},
-  {id:"prac",name:"発表練習",days:[
-      ["2026-11-25","⑥ 2コマ目","ひとりで通して、5分を計る（2回）","となりの人に聞いてもらう"],
-      ["2026-12-08","⑦","ひとりで1回通す → グループでリハーサル","直して、グループを替えてもう一度"],
-      ["2026-12-09","⑧","最後の通し練習と、当日の動きの確認",""]],
+  {id:"prac",name:"発表練習",when:"12/8・12/9",task:"12/8・12/9の授業でリハーサル。本番までに3回以上通して練習しよう。",
     done:()=>cnt(6,i=>data["pt"+i])>=3},
-  {id:"honban",name:"本番・ふりかえり",days:[["2026-12-11","本番","同じ発表を4回 → 14:10からふりかえり",""]],
+  {id:"honban",name:"本番・ふりかえり",when:"12/11 本番",task:"同じ発表を4回。14:10からふりかえり。",
     done:()=>has("rf1","rf2","rf3","rf4")},
 ];
 function has(...ks){ return ks.every(k=>String(data[k]||"").trim()); }
@@ -668,11 +656,11 @@ const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${Str
 const TODAY=ymd(new Date());
 const md=s=>`${+s.slice(5,7)}/${+s.slice(8,10)}`;
 const DOW=s=>"日月火水木金土"[new Date(s+"T00:00:00").getDay()];
-function startTab(){
-  let pick=TABS.findIndex(t=>t.days.some(d=>d[0]===TODAY));
-  if(pick<0) TABS.forEach((t,i)=>{ if(t.days.some(d=>d[0]<TODAY)) pick=i; });
-  return Math.max(0,pick);
-}
+const daysLeft=s=>Math.round((new Date(s+"T00:00:00")-new Date(TODAY+"T00:00:00"))/86400000);
+const tabLabel=t=>t.due?`締切 ${md(t.due)}`:t.when;
+// 開くタブ：まだ終わっていない、いちばん手前のタブ（一斉ではないので、自分の続きから）
+// 質問（用紙で提出済み）は、ここが空でも止まらないようにとばす
+function startTab(){ const i=TABS.findIndex(t=>!t.paper&&!t.done()); return i<0?TABS.length-1:i; }
 let cur=startTab();
 // タブのボタンは1回だけ作り、あとは中身だけ書きかえる（作り直すと、押したボタンが消えてクリックが届かないため）
 const tabsEl=document.getElementById("tabs");
@@ -680,25 +668,29 @@ tabsEl.innerHTML=TABS.map((t,i)=>`<button type="button" class="tab" data-t="${i}
 tabsEl.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>show(+b.dataset.t,true)));
 function paintTabs(){
   tabsEl.querySelectorAll(".tab").forEach(b=>{
-    const i=+b.dataset.t, t=TABS[i];
-    const dates=[...new Set(t.days.map(d=>md(d[0])))].join("・"), now=t.days.some(d=>d[0]===TODAY), past=t.days.every(d=>d[0]<TODAY);
-    b.className="tab"+(i===cur?" on":"")+(past?" past":"");
+    const i=+b.dataset.t, t=TABS[i], done=t.done(), warn=t.due&&!t.paper&&!done, late=warn&&daysLeft(t.due)<0, today=warn&&daysLeft(t.due)===0;
+    b.className="tab"+(i===cur?" on":"")+(done?" fin":"");
     b.setAttribute("aria-current",i===cur?"step":"false");
-    const html=`${now?'<span class="now">今日</span>':""}<small>${dates}</small><b>${t.done()?'<span class="done">✔ </span>':""}${esc(t.name)}</b>`;
+    const html=`${today?'<span class="now">今日まで</span>':late?'<span class="now">締切すぎ</span>':""}<small>${esc(tabLabel(t))}</small><b>${done?'<span class="done">✔ </span>':""}${esc(t.name)}</b>`;
     if(b.innerHTML!==html) b.innerHTML=html;
   });
+  paintGoal();
+}
+function paintGoal(){
+  const t=TABS[cur], el=document.querySelector(`[data-goal="${t.id}"]`); if(!el) return;
+  let st="";
+  if(t.done()) st=`<span class="st ok">✔ できました！ 次のタブへ進もう</span>`;
+  else if(t.due&&!t.paper){ const n=daysLeft(t.due); st=n>0?`<span class="st">あと${n}日</span>`:n===0?`<span class="st warn">今日が締切！</span>`:`<span class="st warn">締切をすぎています。先生に相談しよう</span>`; }
+  const html=`<h2>${esc(t.name)}</h2><p class="due">${t.due?`📌 締切：<b>${md(t.due)}（${DOW(t.due)}）</b>`:`📌 <b>${esc(t.when)}</b>`}　${st}</p><p class="task">${esc(t.task)}</p>`+
+    (t.due?`<p class="ahead">締切までに終わればOK。自分のペースで、どんどん先へ進んでいいよ。</p>`:"");
+  if(el.innerHTML!==html) el.innerHTML=html;
 }
 function show(i,scroll){
   cur=i;
   document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===TABS[i].id));
-  const t=TABS[i];
-  document.querySelector(`[data-goal="${t.id}"]`).innerHTML=`<h2>${esc(t.name)}</h2><ul>`+
-    t.days.map(([d,n,must,more])=>`<li class="${d===TODAY?"today":d<TODAY?"past":""}"><b>${md(d)}（${DOW(d)}）${esc(n)}</b>`+
-      `<span class="must">✅ 必ず：${esc(must)}</span>`+(more?`<span class="more">🚀 できたら：${esc(more)}</span>`:"")+`</li>`).join("")+
-    `</ul><p class="ahead">「必ず」が終わったら、どんどん先のタブへ進んでOK！</p>`;
   const prev=TABS[i-1], next=TABS[i+1];
   document.getElementById("tabnav").innerHTML=(prev?`<button type="button" class="btn" data-go="${i-1}">← ${esc(prev.name)}</button>`:"<span></span>")+
-    (next?`<button type="button" class="btn" data-go="${i+1}">${esc(next.name)} →</button>`:"<span></span>");
+    (next?`<button type="button" class="btn main" data-go="${i+1}">${esc(next.name)} →</button>`:"<span></span>");
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(+b.dataset.go,true)));
   paintTabs();
   const on=document.querySelector("#tabs .tab.on"); if(on) on.scrollIntoView({block:"nearest",inline:"center"});
