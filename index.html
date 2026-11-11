@@ -55,6 +55,18 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .tabnav .btn{flex:1}
 .sbs{display:grid;gap:8px}
 .tip{font-size:12px;color:var(--sub);margin:4px 0 0}
+.mebar{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin:-8px 0 8px}
+.btn.small{padding:4px 10px;font-size:12px}
+body.locked{overflow:hidden}
+.gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(5,4,10,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.gate[hidden]{display:none}
+.gbox{width:100%;max-width:480px;max-height:90vh;overflow:auto;background:var(--bg1);border:1px solid var(--edge);border-radius:20px;padding:18px}
+.gbox h2{margin:0 0 6px;font-size:20px}
+.gbox input{margin-top:8px}
+.gerr{min-height:1.2em;font-size:13px;color:#ffd76a;margin:8px 0 0;text-align:center}
+.grestore{margin-top:14px;font-size:13px}.grestore summary{cursor:pointer;color:var(--sub)}
+.spell{text-align:center;border:1px dashed var(--g);border-radius:14px;padding:10px;margin:8px 0 12px}
+.spell small{display:block;color:var(--sub);font-size:12px}.spell b{display:block;font-size:20px;color:var(--g);margin:2px 0}
 select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
 .cqf{border:1px solid var(--edge);border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(0,0,0,.18)}
 .cqh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -166,6 +178,7 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
   <h1>推しプレゼン</h1>
   <p class="lead">12/11の発表まで、このページで全部そろう準備ワーク</p>
 
+  <div class="mebar" id="mebar"></div>
   <nav class="tabs" id="tabs" aria-label="準備の段階"></nav>
 
   <section class="pane" id="pane-oshi" data-pane="oshi">
@@ -552,13 +565,50 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- はじめに：組・番号・名前（入れるまで先に進めない）／じゅもん -->
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gbox">
+    <h2 id="gateTitle">はじめに</h2>
+    <div id="gateMain">
+      <p class="hint">組・番号・名前を入れてね。提出したものに名前がつきます。ワークは自動でサーバーにも預けられて、別の端末でも「ふっかつのじゅもん」で続きが開けます。</p>
+      <div class="merow">
+        <input type="text" id="gCls" placeholder="組" aria-label="組（例：3-1）">
+        <input type="text" id="gNo" placeholder="番号" aria-label="番号" inputmode="numeric">
+        <input type="text" id="gName" placeholder="名前" aria-label="名前">
+      </div>
+      <input type="text" id="gPass" class="gpass" placeholder="合言葉（クラス文庫と同じ）" aria-label="合言葉" autocomplete="off">
+      <p class="gerr" id="gErr"></p>
+      <div class="row"><button class="btn main" id="gGo" type="button">はじめる</button></div>
+      <details class="grestore">
+        <summary>前に使っていた端末の「じゅもん」がある人</summary>
+        <input type="text" id="gSpell" placeholder="ふっかつのじゅもん" aria-label="ふっかつのじゅもん" autocomplete="off">
+        <div class="row"><button class="btn" id="gLoad" type="button">🔑 じゅもんで呼び出す</button></div>
+      </details>
+    </div>
+    <div id="cloudMain" hidden>
+      <p class="hint">ワークは、この端末に保存されたうえで、自動でサーバーにも預けられます（タブを切りかえたときと、3分ごと）。別の端末や、ホーム画面のアプリで開いたときは、下の「じゅもん」で続きを呼び出せます。</p>
+      <div class="spell"><small>ふっかつのじゅもん</small><b id="cSpell">（まだ預けていません）</b><small id="cWhen"></small></div>
+      <div class="row"><button class="btn main" id="cSave" type="button">☁️ 今すぐ預ける</button><button class="btn" id="cEdit" type="button">✏️ 組・番号・名前を直す</button></div>
+      <details class="grestore">
+        <summary>別のじゅもんで呼び出す</summary>
+        <p class="hint">呼び出すと、この端末のワークは、じゅもんのワークに置きかわります。</p>
+        <input type="text" id="cSpellIn" placeholder="ふっかつのじゅもん" aria-label="ふっかつのじゅもん" autocomplete="off">
+        <div class="row"><button class="btn" id="cLoad" type="button">🔑 じゅもんで呼び出す</button></div>
+      </details>
+      <p class="gerr" id="cErr"></p>
+      <div class="row"><button class="btn" id="cClose" type="button">とじる</button></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const KEY="oshipre_work1";
 let data={};
 try{ data=JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ data={}; }
 // 11/10に「発表タイトル（仮）」に書いた内容は、決定版タイトルが空なら写しておく（もとの ttl は消さない）
 if(!String(data.fttl||"").trim()&&String(data.ttl||"").trim()) data.fttl=data.ttl;
-const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){} };
+let cloudDirty=false;   // サーバーに預けていない変更があるか
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){} cloudDirty=true; };
 const toast=m=>{ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); };
 
 // 候補カード
@@ -775,7 +825,7 @@ async function opSubmit(btn){
   const kind=btn.dataset.kind, panel=btn.closest(".panel"), pin=panel.querySelector(".passin");
   // 合言葉は、提出が通ったときにだけ覚える（通信に失敗しても、入力欄が消えないように）
   const pass=(pin&&pin.value.trim())||ls.get("bunko_pass");
-  const body={token:opToken(),kind};
+  const body={token:opToken(),kind,cls:data.me_cls||"",no:data.me_no||"",name:data.me_name||""};
   if(kind==="q"){
     const f=[1,2].map(n=>data["cqf"+n]);
     if(f.some(x=>!x||!x.text)){ toast("先に、2問とも「✨ Classi の形に整える」を押そう"); return; }
@@ -798,6 +848,77 @@ async function opSubmit(btn){
 document.querySelectorAll(".op-submit").forEach(b=>b.addEventListener("click",()=>opSubmit(b)));
 ["input","change"].forEach(ev=>document.addEventListener(ev,e=>{ if(e.target.tagName==="SELECT") paintOp(); }));
 paintOp();
+
+// ── 組・番号・名前（はじめに）と、ふっかつのじゅもん（ワークをまるごとサーバーに預ける）──
+const $id=id=>document.getElementById(id);
+const meOk=()=>["me_cls","me_no","me_name"].every(k=>String(data[k]||"").trim());
+function paintMe(){
+  const sp=ls.get("oshipre_spell"), at=+ls.get("oshipre_saved")||0;
+  $id("mebar").innerHTML=meOk()?`<span>👤 ${esc(data.me_cls)} ${esc(data.me_no)}番 ${esc(data.me_name)}</span><button type="button" class="btn small" id="meCloud">${sp?`☁️ 預けた ${at?fmtTime(at):""}`:"☁️ 預ける・じゅもん"}</button>`:"";
+  const b=$id("meCloud"); if(b) b.addEventListener("click",()=>openGate("cloud"));
+  $id("cSpell").textContent=sp||"（まだ預けていません）"; $id("cWhen").textContent=at?`${fmtTime(at)} に預けました`:"";
+}
+function openGate(mode){
+  $id("gate").hidden=false; document.body.classList.add("locked");
+  $id("gateMain").hidden=mode!=="name"; $id("cloudMain").hidden=mode!=="cloud";
+  $id("gateTitle").textContent=mode==="name"?"はじめに":"☁️ 預ける・呼び出す";
+  if(mode==="name"){ $id("gCls").value=data.me_cls||""; $id("gNo").value=data.me_no||""; $id("gName").value=data.me_name||"";
+    $id("gPass").hidden=!!ls.get("bunko_pass"); $id("gErr").textContent=""; }
+  $id("cErr").textContent="";
+}
+function closeGate(){ $id("gate").hidden=true; document.body.classList.remove("locked"); }
+let cloudBusy=false;
+async function cloudSave(opts={}){
+  if(!meOk()||!ls.get("bunko_pass")||cloudBusy) return {skip:true};
+  cloudBusy=true; cloudDirty=false;
+  try{
+    const r=await fetch(API+"/bunko/oshipre/save",{method:"POST",keepalive:!!opts.keepalive,headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(ls.get("bunko_pass"))},
+      body:JSON.stringify({token:opToken(),code:ls.get("oshipre_spell"),cls:data.me_cls,no:data.me_no,name:data.me_name,work:data})});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===401){ ls.set("bunko_pass",""); cloudDirty=true; return {pass:true}; }
+    if(!r.ok||!j.code) throw new Error(j.message||"");
+    ls.set("oshipre_spell",j.code); ls.set("oshipre_saved",String(j.savedAt)); paintMe(); return {ok:true};
+  }catch(e){ cloudDirty=true; return {err:e.message||"預けられませんでした"}; }
+  finally{ cloudBusy=false; }
+}
+async function cloudLoad(code,errEl){
+  code=String(code||"").trim(); if(!code){ errEl.textContent="じゅもんを入れてね"; return; }
+  const pass=ls.get("bunko_pass")||$id("gPass").value.trim();
+  if(!pass){ errEl.textContent="先に、合言葉（クラス文庫と同じ）を入れてね"; $id("gPass").hidden=false; return; }
+  errEl.textContent="呼び出しています…";
+  try{
+    const r=await fetch(API+"/bunko/oshipre/load",{method:"POST",headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify({code})});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===401){ errEl.textContent="合言葉がちがうようです"; ls.set("bunko_pass",""); $id("gPass").hidden=false; return; }
+    if(!r.ok||!j.work){ errEl.textContent=j.message||"呼び出せませんでした"; return; }
+    const hasWork=["oshi","why","a_t1","a_t2","a_t3","m1","m2","fin","a_q1","a_q2","st0"].some(k=>String(data[k]||"").trim());
+    if(hasWork&&!confirm(`じゅもんのワーク（${j.who&&j.who.name?j.who.name+"さん・":""}${fmtTime(j.savedAt)} に預けたもの）を呼び出します。この端末のワークは置きかわります。いいですか？`)){ errEl.textContent=""; return; }
+    ls.set("bunko_pass",pass); ls.set("oshipre_token",j.owner); ls.set("oshipre_spell",j.code); ls.set("oshipre_saved",String(j.savedAt));
+    const w=j.work||{}; if(j.who){ w.me_cls=w.me_cls||j.who.cls; w.me_no=w.me_no||j.who.no; w.me_name=w.me_name||j.who.name; }
+    try{ localStorage.setItem(KEY,JSON.stringify(w)); }catch(e){}
+    location.reload();
+  }catch(e){ errEl.textContent="通信できませんでした。少し待ってもう一度"; }
+}
+$id("gGo").addEventListener("click",async()=>{
+  const cls=$id("gCls").value.trim(), no=$id("gNo").value.trim(), name=$id("gName").value.trim(), pass=ls.get("bunko_pass")||$id("gPass").value.trim();
+  if(!cls||!no||!name){ $id("gErr").textContent="組・番号・名前を、全部入れてね"; return; }
+  if(!pass){ $id("gErr").textContent="合言葉（クラス文庫と同じ）を入れてね"; $id("gPass").hidden=false; return; }
+  data.me_cls=cls; data.me_no=no; data.me_name=name; save();
+  ls.set("bunko_pass",pass); $id("gErr").textContent="確かめています…";
+  const r=await cloudSave();
+  if(r.pass){ $id("gErr").textContent="合言葉がちがうようです。クラス文庫と同じ合言葉を入れてね"; $id("gPass").hidden=false; $id("gPass").value=""; return; }
+  closeGate(); paintMe(); toast(r.ok?`ようこそ、${name}さん`:"いまはサーバーに預けられませんでした。ワークはこの端末に保存されます");
+});
+$id("gLoad").addEventListener("click",()=>cloudLoad($id("gSpell").value,$id("gErr")));
+$id("cLoad").addEventListener("click",()=>cloudLoad($id("cSpellIn").value,$id("cErr")));
+$id("cSave").addEventListener("click",async()=>{ $id("cErr").textContent="預けています…"; const r=await cloudSave();
+  $id("cErr").textContent=r.ok?"預けました！":r.pass?"合言葉が変わったようです。いったん閉じて、組・番号・名前の画面から入れ直してね":r.skip?"":"預けられませんでした。少し待ってもう一度"; if(r.pass) openGate("name"); });
+$id("cEdit").addEventListener("click",()=>openGate("name"));
+$id("cClose").addEventListener("click",closeGate);
+setInterval(()=>{ if(cloudDirty) cloudSave(); },180000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&cloudDirty) cloudSave({keepalive:true}); });
+paintMe();
+if(!meOk()) openGate("name");
 
 // めざす発表（4つの観点）。テーマ・練習のタブに出す。観点は3〜6個がよく働くので4つにしぼる
 const RUBRIC=[
@@ -874,6 +995,7 @@ function paintGoal(){
   if(el.innerHTML!==html) el.innerHTML=html;
 }
 function show(i,scroll){
+  if(cur!==i&&cloudDirty) cloudSave();
   cur=i;
   document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===TABS[i].id));
   const prev=TABS[i-1], next=TABS[i+1];
