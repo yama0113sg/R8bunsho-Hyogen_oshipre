@@ -89,17 +89,17 @@
 - `POST {mode:"oshi_ask", role, oshi, q, a, log}` で呼び出す。
   - `role` は `coach`（掘り下げ）、`kohai`（1年生役）、`fit`（テーマ相談）、`qcheck`（質問チェック）、`spice`（テーマを尖らせる）の5つ。
   - `fit`・`qcheck`・`spice` は `{fit, why, ask}` を返し、ほかは `{ask}` を返す。
-- ふだんは Gemini の lite モデルだけを使う。`spice` だけは Flash を先に使い、Flash の1日の上限（約20回）に達したら自動で lite に切りかわる。入力は保存しない。
+- 使うのは Gemini の lite モデルだけ（`spice` も含む）。入力は保存しない。
+  - `spice` で Flash を先に使う形も試したが、本番で答えまで2分以上かかり、結局 lite が答えていたのでやめた（2026-11-11）。Flash は1日20回ほどしか使えないこともあり、使わないほうがよい。
 - AIの問いかけ方を直すときは、**起承転結リポジトリ側**を直す。kishou の main に入ると、Cloudflare Workers Builds で自動デプロイされる。
 - `ALLOWED_ORIGIN = https://yama0113sg.github.io` なので、このリポジトリからそのまま呼べる。Cloudflare 側の操作はいらない。
 - AIの問いへの答えは2字以上で受け付ける（作品名などの短い答えのため）。はじめの欄だけは8字以上。
 
-### role `spice`（テーマを尖らせる）の公開手順
+### role `spice`（テーマを尖らせる）
 
-- Worker 側は、起承転結リポジトリのブランチ `claude/focused-cray-r4xnuy` にある（main には未反映）。指示文は `OSHI_ASK.spice`。
-- ページ側は、このリポジトリの同じ名前のブランチにある。
-- **公開の順番**：①起承転結のブランチを main に入れる（自動デプロイ）→ ②デプロイ後、このリポジトリのブランチを main に入れる。逆にすると、しばらく「AIにつながりませんでした」になる。
-- Flash は1日20回ほどしか使えないので、クラス全体で使うと途中から lite の問いになる（エラーにはならない）。
+- 2026-11-11 に公開（起承転結 yama0113sg/R8bunsho-Hyogen_kishou#7・#8・#9、推しプレゼン yama0113sg/R8bunsho-Hyogen_oshipre#1）。指示文は起承転結側の `OSHI_ASK.spice`。
+- 3つのものさしにふれるぶん `why` が長くなりやすいので、受けとりは `parseFitWide`（`why`・`ask` 90字まで）。
+- Worker 側を変えるときの順番：①起承転結の main に入れてデプロイ（1〜2分）→ ②こちらの main に入れる。
 
 ## 6. これまでにあった問題と対応
 
