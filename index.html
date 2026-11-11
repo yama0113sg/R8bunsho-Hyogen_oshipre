@@ -836,7 +836,7 @@ async function opSubmit(btn){
   if(!pass){ panel.querySelector(".passrow").dataset.show="1"; paintOp(); toast("合言葉（クラス文庫と同じ）を入れてね"); return; }
   btn.disabled=true; const label=btn.textContent; btn.textContent="送っています…";
   try{
-    const r=await fetch(API+"/bunko/oshipre/submit",{method:"POST",headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify(body)});
+    const r=await fetch(API,{method:"POST",headers:{"X-Op":"submit","Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({}));
     if(r.status===401){ ls.set("bunko_pass",""); panel.querySelector(".passrow").dataset.show="1"; paintOp(); throw new Error("合言葉がちがうようです。クラス文庫と同じ合言葉を入れてね"); }
     if(!r.ok||!j.ok) throw new Error(j.message||"送れませんでした。少し待ってもう一度");
@@ -872,7 +872,7 @@ async function cloudSave(opts={}){
   if(!meOk()||!ls.get("bunko_pass")||cloudBusy) return {skip:true};
   cloudBusy=true; cloudDirty=false;
   try{
-    const r=await fetch(API+"/bunko/oshipre/save",{method:"POST",keepalive:!!opts.keepalive,headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(ls.get("bunko_pass"))},
+    const r=await fetch(API,{method:"POST",keepalive:!!opts.keepalive,headers:{"X-Op":"save","Content-Type":"application/json","X-Pass":encodeURIComponent(ls.get("bunko_pass"))},
       body:JSON.stringify({token:opToken(),code:ls.get("oshipre_spell"),cls:data.me_cls,no:data.me_no,name:data.me_name,work:data})});
     const j=await r.json().catch(()=>({}));
     if(r.status===401){ ls.set("bunko_pass",""); cloudDirty=true; return {pass:true}; }
@@ -887,7 +887,7 @@ async function cloudLoad(code,errEl){
   if(!pass){ errEl.textContent="先に、合言葉（クラス文庫と同じ）を入れてね"; $id("gPass").hidden=false; return; }
   errEl.textContent="呼び出しています…";
   try{
-    const r=await fetch(API+"/bunko/oshipre/load",{method:"POST",headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify({code})});
+    const r=await fetch(API,{method:"POST",headers:{"X-Op":"load","Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify({code})});
     const j=await r.json().catch(()=>({}));
     if(r.status===401){ errEl.textContent="合言葉がちがうようです"; ls.set("bunko_pass",""); $id("gPass").hidden=false; return; }
     if(!r.ok||!j.work){ errEl.textContent=j.message||"呼び出せませんでした"; return; }
