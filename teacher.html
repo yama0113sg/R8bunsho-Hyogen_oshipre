@@ -76,9 +76,18 @@ const byWho=(a,b)=>((a.who&&a.who.cls)||"~").localeCompare((b.who&&b.who.cls)||"
 const whoText=(w,i)=>(w&&w.name)?`${w.cls||""} ${w.no?w.no+"番 ":""}${w.name}`.trim():`提出 ${i+1}`;
 const when=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;};
 let clips=[];
+// 表（Excel・Classi 用）：コピーはタブ区切り（Excel にそのまま表で貼れる）、ダウンロードは CSV（BOM つきで Excel の文字化けを防ぐ）
+const cell=v=>String(v??"").replace(/[\t\r\n]+/g," ").trim();
+const tsv=rows=>rows.map(r=>r.map(cell).join("\t")).join("\n");
+const csv=rows=>"\uFEFF"+rows.map(r=>r.map(v=>{ const c=cell(v); return /[",]/.test(c)?`"${c.replace(/"/g,'""')}"`:c; }).join(",")).join("\r\n");
+let dls=[];
+const dl=(name,rows)=>{ dls.push([name,rows]); return `<button type="button" class="cp" data-dl="${dls.length-1}">CSV</button>`; };
+function download(name,text){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:"text/csv"})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
+const ymdNow=()=>{ const d=new Date(); return `${d.getMonth()+1}${String(d.getDate()).padStart(2,"0")}`; };
+const W=w=>[w&&w.cls||"",w&&w.no||"",w&&w.name||""];
 const cp=text=>{ clips.push(text); return `<button type="button" class="cp" data-cp="${clips.length-1}">コピー</button>`; };
 function render(){
-  clips=[];
+  clips=[]; dls=[];
   if(view==="st") return renderStudents();
   const list=items.filter(x=>x.kind===view).sort(byWho);
   let h="";
@@ -88,7 +97,11 @@ function render(){
   if(!list.length) h+=`<p class="empty">まだ提出はありません。</p>`;
   else if(view==="q"){
     const all=list.map((x,i)=>`【${whoText(x.who,i)}】\n`+x.data.qs.map((q,i)=>`質問${i+1}（${TYPE[q.type]}）${q.text}`+(q.type!=="text"?"\n"+q.opts.map(o=>"・"+o).join("\n"):"")).join("\n")).join("\n\n");
-    h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(all)}<span class="meta">← 全員分を文字でまとめてコピー</span></div>`;
+    const maxOpt=Math.max(2,...list.flatMap(x=>x.data.qs.map(q=>q.type==="text"?0:q.opts.length)));
+    const qrows=[["組","番","名前","質問","形式","設問文",...Array.from({length:maxOpt},(_,i)=>`選択肢${i+1}`),"使い方"],
+      ...list.flatMap(x=>x.data.qs.map((q,i)=>[...W(x.who),i+1,TYPE[q.type],q.text,...Array.from({length:maxOpt},(_,k)=>q.type==="text"?"":(q.opts[k]||"")),q.use||""]))];
+    h+=`<div class="card"><div class="row"><span>${list.length}人が提出</span>${cp(tsv(qrows))}<span class="meta">表としてコピー（Excel に貼ると、組・番・名前・質問…の列に分かれます）</span>${dl(`oshipre_questions_${ymdNow()}.csv`,qrows)}<span class="meta">ダウンロード</span></div>`+
+      `<div class="row" style="margin-top:6px">${cp(all)}<span class="meta">文字でまとめてコピー（前のかたち）</span></div></div>`;
     list.forEach((x,xi)=>{
       h+=`<div class="card"><div class="who">${esc(whoText(x.who,xi))} <span class="meta">（${when(x.updated)}）</span></div>`;
       x.data.qs.forEach((q,i)=>{
@@ -106,23 +119,29 @@ function render(){
   }else{
     const titles=list.map(x=>x.data.fttl).join("\n");
     const withIntro=list.map(x=>`${x.data.fttl}${x.data.intro?"："+x.data.intro:""}`).join("\n");
-    h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(titles)}<span class="meta">タイトル一覧</span>${cp(withIntro)}<span class="meta">ひとこと紹介つき（1年生の視聴アンケートの選択肢に）</span></div>`;
+    const trows=[["組","番","名前","タイトル","テーマ","ひとこと紹介","1年生にどうなってほしいか"],...list.map(x=>[...W(x.who),x.data.fttl,x.data.fin,x.data.intro,x.data.who])];
+    h+=`<div class="card"><div class="row"><span>${list.length}人が提出</span>${cp(tsv(trows))}<span class="meta">表としてコピー（Excel 用）</span>${dl(`oshipre_themes_${ymdNow()}.csv`,trows)}<span class="meta">ダウンロード</span></div>`+
+      `<div class="row" style="margin-top:6px">${cp(titles)}<span class="meta">タイトル一覧</span>${cp(withIntro)}<span class="meta">ひとこと紹介つき（1年生の視聴アンケートの選択肢に）</span></div></div>`;
     h+=`<div class="card"><table><thead><tr><th>提出</th><th>タイトル</th><th>テーマ</th><th>ひとこと紹介</th><th>1年生にどうなってほしいか</th></tr></thead><tbody>`+
       list.map((x,i)=>`<tr><td>${esc(whoText(x.who,i))}<div class="meta">${when(x.updated)}</div></td><td>${esc(x.data.fttl)}</td><td>${esc(x.data.fin)}</td><td>${esc(x.data.intro)}</td><td>${esc(x.data.who)}</td></tr>`).join("")+`</tbody></table></div>`;
   }
   $("out").innerHTML=h;
   $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
+  $("out").querySelectorAll("[data-dl]").forEach(b=>b.addEventListener("click",()=>{ const [n,rows]=dls[+b.dataset.dl]; download(n,csv(rows)); }));
 }
 function renderStudents(){
-  clips=[];
+  clips=[]; dls=[];
   const L=students.slice().sort(byWho), sub=k=>new Set(items.filter(x=>x.kind===k).map(x=>x.token));
   const sq=sub("q"), sth=sub("theme"), ok=b=>b?"✔":"—";
-  let h=`<div class="card"><span>${L.length}人</span><div class="meta">じゅもんを忘れた生徒には、ここのじゅもんを教えてください（別の端末で「じゅもんで呼び出す」に入れると、続きが開けます）。</div></div>`;
+  const srows=[["組","番","名前","じゅもん","推し","タイトル","質問の提出","テーマの提出","構成","絵コンテ","スライドのチェック","練習","最後に預けた"],
+    ...L.map(x=>[...W(x.who),x.code,x.oshi,x.fttl,sq.has(x.owner)?"済":"",sth.has(x.owner)?"済":"",`${x.st}/5`,`${x.sb}枚`,`${x.ck}/9`,`${x.pt}回`,when(x.savedAt)])];
+  let h=`<div class="card"><div class="row"><span>${L.length}人</span>${cp(tsv(srows))}<span class="meta">表としてコピー</span>${dl(`oshipre_students_${ymdNow()}.csv`,srows)}<span class="meta">ダウンロード</span></div><div class="meta">じゅもんを忘れた生徒には、ここのじゅもんを教えてください（別の端末で「じゅもんで呼び出す」に入れると、続きが開けます）。</div></div>`;
   h+=`<div class="card"><table><thead><tr><th>生徒</th><th>じゅもん</th><th>推し／タイトル</th><th>質問</th><th>テーマ</th><th>構成</th><th>絵コンテ</th><th>スライド</th><th>練習</th></tr></thead><tbody>`+
     L.map(x=>`<tr><td>${esc(whoText(x.who,0))}<div class="meta">${when(x.savedAt)} に預けた</div></td><td>${esc(x.code)} ${cp(x.code)}</td><td>${esc(x.oshi)}${x.fttl?`<div class="meta">${esc(x.fttl)}</div>`:""}</td>`+
       `<td>${ok(sq.has(x.owner))}</td><td>${ok(sth.has(x.owner))}</td><td>${x.st}/5</td><td>${x.sb}枚</td><td>${x.ck}/9</td><td>${x.pt}回</td></tr>`).join("")+`</tbody></table></div>`;
   $("out").innerHTML=h;
   $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
+  $("out").querySelectorAll("[data-dl]").forEach(b=>b.addEventListener("click",()=>{ const [n,rows]=dls[+b.dataset.dl]; download(n,csv(rows)); }));
 }
 async function load(){
   const pass=$("tpass").value.trim()||ss.get("bunko_tpass");
