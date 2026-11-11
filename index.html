@@ -56,6 +56,11 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .sbs{display:grid;gap:8px}
 .tip{font-size:12px;color:var(--sub);margin:4px 0 0}
 select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
+.cqf{border:1px solid var(--edge);border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(0,0,0,.18)}
+.cqh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cqf .nil{color:var(--sub);font-size:13px;margin:6px 0 0}.cqf .warn{color:#ffd76a;font-size:13px;margin:6px 0 0}
+.cqf .cl{margin-top:6px}.cqf .cl b{display:block;font-size:12px;color:var(--sub)}.cqf ol{margin:2px 0 0;padding-left:1.4em}
+.cqf .type{display:inline-block;font-size:12px;font-weight:900;border:1px solid var(--g);color:var(--g);border-radius:999px;padding:0 8px}
 .cq,.me{border:1px solid var(--edge);border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(0,0,0,.18)}
 .merow{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px;margin-top:6px}
 .passrow{margin-top:6px}
@@ -225,51 +230,11 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
     <input type="text" id="qp2" data-k="qp2">
   </div>
   <div class="panel">
-    <h2><span class="num">3</span>📮 Classi のアンケート用に整えて、提出しよう</h2>
-    <p class="hint">1年生へのアンケートは、Classi で作ります。上で磨いた2問を、Classi の形式（単一選択・複数選択・記述）に合わせて書き直して、提出しよう。1年生は約30問に答えるので、<b>選んで答える形</b>がおすすめです。提出したあとに直したら、もう一度押せば上書きされます。</p>
-    <div class="cq">
-      <b>質問①</b>
-      <label for="cq1t">形式</label>
-      <select id="cq1t" data-k="cq1t">
-        <option value="single">単一選択形式（1つだけ選ぶ）</option>
-        <option value="multi">複数選択形式（いくつでも選べる）</option>
-        <option value="text">記述形式（自由に書く）</option>
-      </select>
-      <label for="cq1x">設問文</label>
-      <textarea id="cq1x" data-k="cq1x" placeholder="例：サウナに入ったことはありますか？"></textarea>
-      <div class="optbox">
-        <label for="cq1o">選択肢（1行に1つ。「知らない」なども入れよう）</label>
-        <textarea id="cq1o" data-k="cq1o" placeholder="例：\nある\nない\n名前は聞いたことがある"></textarea>
-      </div>
-      <label for="cq1u">プレゼンのどこで、どう使う？</label>
-      <input type="text" id="cq1u" data-k="cq1u" placeholder="例：つかみで「◯割が未体験」と見せる">
-    </div>
-    <div class="cq">
-      <b>質問②</b>
-      <label for="cq2t">形式</label>
-      <select id="cq2t" data-k="cq2t">
-        <option value="single">単一選択形式（1つだけ選ぶ）</option>
-        <option value="multi">複数選択形式（いくつでも選べる）</option>
-        <option value="text">記述形式（自由に書く）</option>
-      </select>
-      <label for="cq2x">設問文</label>
-      <textarea id="cq2x" data-k="cq2x" placeholder=""></textarea>
-      <div class="optbox">
-        <label for="cq2o">選択肢（1行に1つ。「知らない」なども入れよう）</label>
-        <textarea id="cq2o" data-k="cq2o" placeholder=""></textarea>
-      </div>
-      <label for="cq2u">プレゼンのどこで、どう使う？</label>
-      <input type="text" id="cq2u" data-k="cq2u" placeholder="">
-    </div>
-    <div class="me">
-      <b>提出する人</b>
-      <div class="merow">
-        <input type="text" data-k="me_cls" placeholder="組（例：3-1）" aria-label="組">
-        <input type="text" data-k="me_no" placeholder="番号" aria-label="番号" inputmode="numeric">
-        <input type="text" data-k="me_name" placeholder="名前" aria-label="名前">
-      </div>
-      <div class="passrow" hidden><input type="text" class="passin" placeholder="合言葉（クラス文庫と同じ）" aria-label="合言葉" autocomplete="off"></div>
-    </div>
+    <h2><span class="num">3</span>📮 Classi の形に整えて、提出しよう</h2>
+    <p class="hint">1年生へのアンケートは、Classi で作ります。上の「AIと磨こう」で書いた質問を、AIが Classi の形（形式・設問文・選択肢）に分けて表示します。ちがっていたら、上の欄を直して、もう一度「整える」を押そう。直したら、提出もし直せば上書きされます。</p>
+    <div class="cqf" data-n="1"></div>
+    <div class="cqf" data-n="2"></div>
+    <div class="passrow" hidden><input type="text" class="passin" placeholder="合言葉（クラス文庫と同じ）" aria-label="合言葉" autocomplete="off"></div>
     <div class="row"><button class="btn main op-submit" type="button" data-kind="q">📮 質問を提出する</button></div>
     <p class="opstat" data-kind="q"></p>
   </div>
@@ -292,7 +257,7 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
   </div>
   <div class="panel">
     <h2><span class="num">2</span>🔥 切り口カードで尖らせよう</h2>
-    <p class="hint">上の1文を、「1年生が聞きたくなる」形に近づけよう。切り口カードから1〜2枚選んで（2枚の組み合わせもOK）、テーマを書き直してみよう。上の1文は消さなくてOK。</p>
+    <p class="hint">上の1文を、「1年生が聞きたくなる」形に近づけよう。切り口カードから1枚選んで、テーマを書き直してみよう。ほかのカードも試したくなったら、選びなおしてOK。上の1文は消さなくてOK。</p>
     <div class="ex info">
       <b>聞きたくなるテーマの3つのものさし</b>
       <ul>
@@ -729,8 +694,8 @@ const CARDS=[
   {g:"🎁 1年生に届ける",n:"景色が変わる型",f:"〇〇を知ると、いつもの□□がちがって見える",e:"例：マンホールの蓋を知ると、通学路が楽しくなる"},
   {g:"🎁 1年生に届ける",n:"届けたい相手型",f:"□□な1年生にこそ、〇〇を",e:"例：人見知りの人にこそ、ボードゲームを"},
 ];
-const CARD_MAX=2;
-const picked=()=>(Array.isArray(data.spc)?data.spc:[]).filter(i=>CARDS[i]);
+const CARD_MAX=1;
+const picked=()=>(Array.isArray(data.spc)?data.spc:[]).filter(i=>CARDS[i]).slice(-CARD_MAX);
 const pickedNames=()=>picked().map(i=>CARDS[i].n).join("・");
 function renderCards(){
   const box=document.getElementById("cards"), on=picked();
@@ -743,8 +708,7 @@ function renderCards(){
   box.querySelectorAll("[data-c]").forEach(b=>b.addEventListener("click",()=>{
     const i=+b.dataset.c, cur=picked();
     if(cur.includes(i)) data.spc=cur.filter(x=>x!==i);
-    else if(cur.length>=CARD_MAX){ toast("組み合わせは2枚までにしよう"); return; }
-    else data.spc=[...cur,i];
+    else data.spc=[...cur,i].slice(-CARD_MAX);   // 1枚だけ。別のカードを押したら、そちらに切りかえる
     save(); renderCards();
   }));
 }
@@ -763,6 +727,40 @@ const STRUCT={id:"s1",first:"構成で迷っているところは？",ph:"例：
   q:()=>`5分の構成（${theme()}）／つかみ：${data.st0||"？"}／本題①：${data.st1||"？"}／本題②：${data.st2||"？"}／本題③：${data.st3||"？"}／まとめ：${data.st4||"？"}`};
 renderTalk(document.getElementById("s1"),STRUCT,"coach");
 
+// 1年生への質問を Classi の形に整える。「AIと磨こう」のやりとり（最初の欄＋問い返しの答え）から、AIが最終版を取り出して分ける
+const QTYPE={single:"単一選択形式",multi:"複数選択形式",text:"記述形式"};
+const qSrc=n=>JSON.stringify([data["a_q"+n]||"",...thread("q"+n).map(x=>x.ans||"")]);
+function paintCqf(){
+  document.querySelectorAll(".cqf").forEach(box=>{
+    const n=+box.dataset.n, f=data["cqf"+n], stale=f&&f.src!==qSrc(n);
+    const body=!f?`<p class="nil">まだ整えていません。上の「質問${"①②"[n-1]}」を書いてから押そう。</p>`:
+      (!f.text?`<p class="nil">質問が見つかりませんでした。上の欄に、質問文と選択肢を書いてから、もう一度押そう。</p>`:
+      `<div class="cl"><span class="type">${QTYPE[f.type]}</span></div><div class="cl"><b>設問文</b>${esc(f.text)}</div>`+
+      (f.type!=="text"?`<div class="cl"><b>選択肢</b><ol>${(f.opts||[]).map(o=>`<li>${esc(o)}</li>`).join("")}</ol></div>`:"")+
+      (f.use?`<div class="cl"><b>使い方</b>${esc(f.use)}</div>`:""));
+    box.innerHTML=`<div class="cqh"><b>質問${"①②"[n-1]}</b><button type="button" class="btn ai-btn" data-fmt="${n}">✨ Classi の形に整える</button></div>`+
+      (stale?`<p class="warn">上の質問が変わりました。もう一度「整える」を押そう。</p>`:"")+body;
+    box.querySelector("[data-fmt]").addEventListener("click",e=>qFormat(n,e.currentTarget));
+  });
+}
+async function qFormat(n,btn){
+  const first=(data["a_q"+n]||"").trim();
+  if([...first].length<4){ toast(`先に、上の「質問${"①②"[n-1]}」の欄に質問を書こう`); return; }
+  if(used()>=DAY_MAX){ toast("今日のAIの回数はここまで。また次の授業で"); return; }
+  btn.disabled=true; btn.textContent="整えています…";
+  const src=qSrc(n), log=thread("q"+n).map(x=>({ask:x.ask,ans:x.ans||""}));
+  try{
+    const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"oshi_qformat",first,log})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||typeof j.text!=="string") throw new Error(j.message||"");
+    data["cqf"+n]={type:j.type,text:j.text,opts:j.opts||[],use:j.use||"",src};
+    data.aiDay=today(); data.aiN=used()+1; save();
+  }catch(e){ toast(e.message||"AIにつながりませんでした。少し待ってもう一度"); }
+  paintCqf();
+}
+paintCqf();
+document.addEventListener("input",e=>{ if(e.target.closest&&e.target.closest("#q1,#q2")) paintCqf(); });
+
 // 提出（1年生への質問・テーマ）。クラス文庫と同じ合言葉（localStorage の bunko_pass）を使う
 const ls={get(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
 function opToken(){ let t=ls.get("oshipre_token"); if(t.length<16){ t=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""); ls.set("oshipre_token",t); } return t; }
@@ -778,8 +776,13 @@ async function opSubmit(btn){
   // 合言葉は、提出が通ったときにだけ覚える（通信に失敗しても、入力欄が消えないように）
   const pass=(pin&&pin.value.trim())||ls.get("bunko_pass");
   const body={token:opToken(),kind,cls:data.me_cls||"",no:data.me_no||"",name:data.me_name||""};
-  if(!String(body.cls).trim()||!String(body.no).trim()||!String(body.name).trim()){ toast("組・番号・名前を書いてね"); return; }
-  if(kind==="q") body.qs=[1,2].map(n=>({type:data["cq"+n+"t"]||"single",text:data["cq"+n+"x"]||"",opts:String(data["cq"+n+"o"]||"").split(/\n/).map(x=>x.trim()).filter(Boolean),use:data["cq"+n+"u"]||""}));
+  if(kind==="theme"&&(!String(body.cls).trim()||!String(body.no).trim()||!String(body.name).trim())){ toast("組・番号・名前を書いてね"); return; }
+  if(kind==="q"){
+    const f=[1,2].map(n=>data["cqf"+n]);
+    if(f.some(x=>!x||!x.text)){ toast("先に、2問とも「✨ Classi の形に整える」を押そう"); return; }
+    if(f.some((x,i)=>x.src!==qSrc(i+1))){ toast("上の質問が変わっています。もう一度「整える」を押そう"); paintCqf(); return; }
+    body.qs=f.map(x=>({type:x.type,text:x.text,opts:x.opts||[],use:x.use||""}));
+  }
   else Object.assign(body,{fin:data.fin||"",fttl:data.fttl||"",intro:data.intro||"",who:data.who||""});
   if(!pass){ panel.querySelector(".passrow").dataset.show="1"; paintOp(); toast("合言葉（クラス文庫と同じ）を入れてね"); return; }
   btn.disabled=true; const label=btn.textContent; btn.textContent="送っています…";
@@ -940,7 +943,7 @@ function summary(){
     "",
     ...QS.map(t=>tl(t.id,"1年生への"+t.title)),
     "■ 結果の予想　質問①："+g("qp1")+"／質問②："+g("qp2"),
-    ...[1,2].map(n=>`■ Classi用 質問${"①②"[n-1]}（${({single:"単一選択",multi:"複数選択",text:"記述"})[data["cq"+n+"t"]||"single"]}）：${g("cq"+n+"x")}`+((data["cq"+n+"t"]||"single")!=="text"?`／選択肢：${String(data["cq"+n+"o"]||"").split(/\n/).filter(x=>x.trim()).join("・")||"（未記入）"}`:"")),
+    ...[1,2].map(n=>{ const f=data["cqf"+n]; return f&&f.text?`■ Classi用 質問${"①②"[n-1]}（${QTYPE[f.type]}）：${f.text}`+(f.type!=="text"?`／選択肢：${(f.opts||[]).join("・")}`:""):`■ Classi用 質問${"①②"[n-1]}：（まだ整えていない）`; }),
     "",
     "■ 5分の構成",
     "　つかみ："+g("st0"),"　本題①："+g("st1"),"　本題②："+g("st2"),"　本題③："+g("st3"),"　まとめ："+g("st4"),
