@@ -55,6 +55,11 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .tabnav .btn{flex:1}
 .sbs{display:grid;gap:8px}
 .tip{font-size:12px;color:var(--sub);margin:4px 0 0}
+select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
+.cq,.me{border:1px solid var(--edge);border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(0,0,0,.18)}
+.merow{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px;margin-top:6px}
+.passrow{margin-top:6px}
+.opstat{text-align:center;font-size:13px;color:var(--sub);margin:8px 0 0}.opstat.done{color:var(--ok);font-weight:700}
 .tip b{color:var(--g)}
 .sbref{font-size:13px}.sbref ul{margin:2px 0 6px}.sbref .nil{color:var(--sub)}
 .rubricbox summary{cursor:pointer;font-weight:900}
@@ -219,6 +224,55 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
     <label for="qp2">質問②の予想</label>
     <input type="text" id="qp2" data-k="qp2">
   </div>
+  <div class="panel">
+    <h2><span class="num">3</span>📮 Classi のアンケート用に整えて、提出しよう</h2>
+    <p class="hint">1年生へのアンケートは、Classi で作ります。上で磨いた2問を、Classi の形式（単一選択・複数選択・記述）に合わせて書き直して、提出しよう。1年生は約30問に答えるので、<b>選んで答える形</b>がおすすめです。提出したあとに直したら、もう一度押せば上書きされます。</p>
+    <div class="cq">
+      <b>質問①</b>
+      <label for="cq1t">形式</label>
+      <select id="cq1t" data-k="cq1t">
+        <option value="single">単一選択形式（1つだけ選ぶ）</option>
+        <option value="multi">複数選択形式（いくつでも選べる）</option>
+        <option value="text">記述形式（自由に書く）</option>
+      </select>
+      <label for="cq1x">設問文</label>
+      <textarea id="cq1x" data-k="cq1x" placeholder="例：サウナに入ったことはありますか？"></textarea>
+      <div class="optbox">
+        <label for="cq1o">選択肢（1行に1つ。「知らない」なども入れよう）</label>
+        <textarea id="cq1o" data-k="cq1o" placeholder="例：\nある\nない\n名前は聞いたことがある"></textarea>
+      </div>
+      <label for="cq1u">プレゼンのどこで、どう使う？</label>
+      <input type="text" id="cq1u" data-k="cq1u" placeholder="例：つかみで「◯割が未体験」と見せる">
+    </div>
+    <div class="cq">
+      <b>質問②</b>
+      <label for="cq2t">形式</label>
+      <select id="cq2t" data-k="cq2t">
+        <option value="single">単一選択形式（1つだけ選ぶ）</option>
+        <option value="multi">複数選択形式（いくつでも選べる）</option>
+        <option value="text">記述形式（自由に書く）</option>
+      </select>
+      <label for="cq2x">設問文</label>
+      <textarea id="cq2x" data-k="cq2x" placeholder=""></textarea>
+      <div class="optbox">
+        <label for="cq2o">選択肢（1行に1つ。「知らない」なども入れよう）</label>
+        <textarea id="cq2o" data-k="cq2o" placeholder=""></textarea>
+      </div>
+      <label for="cq2u">プレゼンのどこで、どう使う？</label>
+      <input type="text" id="cq2u" data-k="cq2u" placeholder="">
+    </div>
+    <div class="me">
+      <b>提出する人</b>
+      <div class="merow">
+        <input type="text" data-k="me_cls" placeholder="組（例：3-1）" aria-label="組">
+        <input type="text" data-k="me_no" placeholder="番号" aria-label="番号" inputmode="numeric">
+        <input type="text" data-k="me_name" placeholder="名前" aria-label="名前">
+      </div>
+      <div class="passrow" hidden><input type="text" class="passin" placeholder="合言葉（クラス文庫と同じ）" aria-label="合言葉" autocomplete="off"></div>
+    </div>
+    <div class="row"><button class="btn main op-submit" type="button" data-kind="q">📮 質問を提出する</button></div>
+    <p class="opstat" data-kind="q"></p>
+  </div>
   </section>
 
   <section class="pane" id="pane-theme" data-pane="theme">
@@ -256,20 +310,31 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
   </div>
   <div class="panel">
     <h2><span class="num">3</span>決定版を書いて、提出しよう</h2>
-    <p class="hint">1・2をふまえて、提出するテーマを決めよう。11/17の締切の日に、用紙に写して出します。</p>
+    <p class="hint">1・2をふまえて、提出するテーマを決めよう。締切（11/17）までに、いちばん下の「📮 テーマを提出する」で出します。タイトルとひとこと紹介は、1年生が「どの発表を見るか」選ぶアンケートに載ります。</p>
     <label for="fin">テーマ（決定版）</label>
     <input type="text" id="fin" data-k="fin" placeholder="例：サウナが大嫌いだった私が、ある冬の1回でハマった話">
     <label for="who">聞いた1年生に、最後どうなってほしい？（発表のゴール）</label>
     <input type="text" id="who" data-k="who" placeholder="例：「一回行ってみようかな」と思ってほしい">
     <label for="fttl">発表タイトル</label>
     <input type="text" id="fttl" data-k="fttl" placeholder="例：90分で人生が整う ― サウナ嫌いだった私へ">
-    <label for="intro">ひとこと紹介（30字くらい・先生から指示があったら書こう）</label>
+    <label for="intro">ひとこと紹介（30字くらい。1年生が見る発表を選ぶときの手がかりになります）</label>
     <input type="text" id="intro" data-k="intro" placeholder="例：サウナ嫌いだった私が、入り方ひとつで変わった話をします">
     <div class="talk" style="margin-top:16px">
       <h3>🙋 1年生につっこんでもらう</h3>
       <p class="sub">AIが「話を聞く1年生」になって、決定版のテーマに素朴な疑問をぶつけてきます。答えながら、決定版を書き直していこう。</p>
       <div id="kohai"></div>
     </div>
+    <div class="me">
+      <b>提出する人</b>
+      <div class="merow">
+        <input type="text" data-k="me_cls" placeholder="組（例：3-1）" aria-label="組">
+        <input type="text" data-k="me_no" placeholder="番号" aria-label="番号" inputmode="numeric">
+        <input type="text" data-k="me_name" placeholder="名前" aria-label="名前">
+      </div>
+      <div class="passrow" hidden><input type="text" class="passin" placeholder="合言葉（クラス文庫と同じ）" aria-label="合言葉" autocomplete="off"></div>
+    </div>
+    <div class="row"><button class="btn main op-submit" type="button" data-kind="theme">📮 テーマを提出する</button></div>
+    <p class="opstat" data-kind="theme"></p>
   </div>
   </section>
 
@@ -562,7 +627,9 @@ document.querySelectorAll("[data-s] button").forEach(b=>b.addEventListener("clic
 document.querySelectorAll("[data-k]").forEach(el=>{
   const k=el.dataset.k;
   if(el.type==="checkbox"){ el.checked=!!data[k]; el.addEventListener("change",()=>{data[k]=el.checked;save();}); }
-  else{ el.value=data[k]||""; el.addEventListener("input",()=>{data[k]=el.value;save();}); }
+  else{ el.value=data[k]||(el.tagName==="SELECT"?el.value:""); if(el.tagName==="SELECT") data[k]=el.value;
+    el.addEventListener("input",()=>{data[k]=el.value;save();
+      document.querySelectorAll(`[data-k="${k}"]`).forEach(o=>{ if(o!==el) o.value=el.value; }); }); }
 });
 document.querySelectorAll("input[name=pick]").forEach(r=>{
   if(String(data.pick)===r.value) r.checked=true;
@@ -696,6 +763,40 @@ const STRUCT={id:"s1",first:"構成で迷っているところは？",ph:"例：
   q:()=>`5分の構成（${theme()}）／つかみ：${data.st0||"？"}／本題①：${data.st1||"？"}／本題②：${data.st2||"？"}／本題③：${data.st3||"？"}／まとめ：${data.st4||"？"}`};
 renderTalk(document.getElementById("s1"),STRUCT,"coach");
 
+// 提出（1年生への質問・テーマ）。クラス文庫と同じ合言葉（localStorage の bunko_pass）を使う
+const ls={get(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+function opToken(){ let t=ls.get("oshipre_token"); if(t.length<16){ t=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join(""); ls.set("oshipre_token",t); } return t; }
+const fmtTime=ms=>{ const d=new Date(ms); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`; };
+function paintOp(){
+  document.querySelectorAll(".opstat").forEach(el=>{ const t=data["sub_"+el.dataset.kind];
+    el.innerHTML=t?`✅ 提出ずみ（${fmtTime(t)}）。直したら、もう一度押せば上書きされます。`:"まだ提出していません。"; el.classList.toggle("done",!!t); });
+  document.querySelectorAll(".optbox").forEach(b=>{ const sel=b.parentElement.querySelector("select"); b.hidden=sel&&sel.value==="text"; });
+  const need=!ls.get("bunko_pass"); document.querySelectorAll(".passrow").forEach(r=>r.hidden=!need&&!r.dataset.show);
+}
+async function opSubmit(btn){
+  const kind=btn.dataset.kind, panel=btn.closest(".panel"), pin=panel.querySelector(".passin");
+  // 合言葉は、提出が通ったときにだけ覚える（通信に失敗しても、入力欄が消えないように）
+  const pass=(pin&&pin.value.trim())||ls.get("bunko_pass");
+  const body={token:opToken(),kind,cls:data.me_cls||"",no:data.me_no||"",name:data.me_name||""};
+  if(!String(body.cls).trim()||!String(body.no).trim()||!String(body.name).trim()){ toast("組・番号・名前を書いてね"); return; }
+  if(kind==="q") body.qs=[1,2].map(n=>({type:data["cq"+n+"t"]||"single",text:data["cq"+n+"x"]||"",opts:String(data["cq"+n+"o"]||"").split(/\n/).map(x=>x.trim()).filter(Boolean),use:data["cq"+n+"u"]||""}));
+  else Object.assign(body,{fin:data.fin||"",fttl:data.fttl||"",intro:data.intro||"",who:data.who||""});
+  if(!pass){ panel.querySelector(".passrow").dataset.show="1"; paintOp(); toast("合言葉（クラス文庫と同じ）を入れてね"); return; }
+  btn.disabled=true; const label=btn.textContent; btn.textContent="送っています…";
+  try{
+    const r=await fetch(API+"/bunko/oshipre/submit",{method:"POST",headers:{"Content-Type":"application/json","X-Pass":encodeURIComponent(pass)},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===401){ ls.set("bunko_pass",""); panel.querySelector(".passrow").dataset.show="1"; paintOp(); throw new Error("合言葉がちがうようです。クラス文庫と同じ合言葉を入れてね"); }
+    if(!r.ok||!j.ok) throw new Error(j.message||"送れませんでした。少し待ってもう一度");
+    ls.set("bunko_pass",pass); document.querySelectorAll(".passrow").forEach(r=>{ delete r.dataset.show; const i=r.querySelector(".passin"); if(i) i.value=""; });
+    data["sub_"+kind]=j.updated; save(); toast("提出しました！");
+  }catch(e){ toast(e.message||"送れませんでした"); }
+  finally{ btn.disabled=false; btn.textContent=label; paintOp(); paintTabs(); }
+}
+document.querySelectorAll(".op-submit").forEach(b=>b.addEventListener("click",()=>opSubmit(b)));
+["input","change"].forEach(ev=>document.addEventListener(ev,e=>{ if(e.target.tagName==="SELECT") paintOp(); }));
+paintOp();
+
 // めざす発表（4つの観点）。テーマ・練習のタブに出す。観点は3〜6個がよく働くので4つにしぼる
 const RUBRIC=[
   ["💗","「好き」が伝わる","自分のエピソードの場面がある。熱量が声や表情から伝わる"],
@@ -722,10 +823,10 @@ paintRefs();
 const TABS=[
   {id:"oshi",name:"推しを決める",when:"はじめに",task:"推しを1つに決めて、AIと問答して掘り下げよう。",
     done:()=>has("oshi","why")},
-  {id:"q",name:"1年生への質問",due:"2026-11-11",paper:true,task:"1年生への質問を2問作って、用紙で提出する（提出は用紙なので、ここが空でもOK）。",
-    done:()=>has("a_q1","a_q2")},
+  {id:"q",name:"1年生への質問",due:"2026-11-11",paper:true,task:"1年生への質問を2問、Classi の形式に整えて「📮 質問を提出する」で出す。",
+    done:()=>!!data.sub_q},
   {id:"theme",name:"テーマを決める",due:"2026-11-17",task:"決定版のテーマとタイトルを書いて、提出する。",
-    done:()=>has("fin","fttl")},
+    done:()=>has("fin","fttl")&&!!data.sub_theme},
   {id:"kousei",name:"構成・絵コンテ",due:"2026-11-18",task:"5分の構成と、スライドの絵コンテを作る。",
     done:()=>has("st0","st1","st2","st3","st4")&&cnt(10,i=>data["sbh"+i]||data["sbv"+i])>=6},
   {id:"slide",name:"スライドを作る",due:"2026-11-25",task:"アンケート結果も入れて、スライドを完成させる（できあがりチェックが全部つけばOK）。",
@@ -839,6 +940,7 @@ function summary(){
     "",
     ...QS.map(t=>tl(t.id,"1年生への"+t.title)),
     "■ 結果の予想　質問①："+g("qp1")+"／質問②："+g("qp2"),
+    ...[1,2].map(n=>`■ Classi用 質問${"①②"[n-1]}（${({single:"単一選択",multi:"複数選択",text:"記述"})[data["cq"+n+"t"]||"single"]}）：${g("cq"+n+"x")}`+((data["cq"+n+"t"]||"single")!=="text"?`／選択肢：${String(data["cq"+n+"o"]||"").split(/\n/).filter(x=>x.trim()).join("・")||"（未記入）"}`:"")),
     "",
     "■ 5分の構成",
     "　つかみ："+g("st0"),"　本題①："+g("st1"),"　本題②："+g("st2"),"　本題③："+g("st3"),"　まとめ："+g("st4"),

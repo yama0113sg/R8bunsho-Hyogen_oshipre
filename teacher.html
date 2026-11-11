@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>推しプレゼン 先生用</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#222;--sub:#666;--edge:#ddd;--acc:#c2185b;--ok:#2e7d32}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121018;--card:#1d1a26;--ink:#eee;--sub:#aaa;--edge:#333;--acc:#ff8ab8;--ok:#7be08a}}
+:root[data-theme="dark"]{--bg:#121018;--card:#1d1a26;--ink:#eee;--sub:#aaa;--edge:#333;--acc:#ff8ab8;--ok:#7be08a}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic",sans-serif;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.lead{color:var(--sub);font-size:13px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--edge);border-radius:8px;background:var(--card);color:var(--ink)}
+button{font:inherit;cursor:pointer;border:1px solid var(--edge);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px}
+button.main{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+button.cp{font-size:12px;padding:2px 8px;white-space:nowrap}
+.tabs{display:flex;gap:6px;margin:10px 0}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.who{font-weight:700}
+.meta{font-size:12px;color:var(--sub)}
+.q{border-top:1px dashed var(--edge);padding-top:8px;margin-top:8px}
+.type{display:inline-block;font-size:12px;font-weight:700;border:1px solid var(--acc);color:var(--acc);border-radius:999px;padding:0 8px;margin-right:6px}
+.line{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;margin:4px 0}
+.line span{flex:1;white-space:pre-wrap}
+ol{margin:4px 0;padding-left:1.4em}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--edge);padding:6px;text-align:left;vertical-align:top}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000c;color:#fff;padding:6px 14px;border-radius:999px;font-size:13px;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{color:var(--sub)}
+@media (max-width:600px){table,thead,tbody,tr,th,td{display:block}thead{display:none}td{border:none;padding:2px 0}tr{border-bottom:1px solid var(--edge);padding:6px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>推しプレゼン 先生用</h1>
+  <p class="lead">生徒が提出した「1年生への質問」と「テーマ」を見て、Classi のアンケートに写すためのページです。生徒が出し直すと、上書きされます。</p>
+
+  <div class="card">
+    <div class="row">
+      <input type="password" id="tpass" placeholder="先生用の合言葉" aria-label="先生用の合言葉" autocomplete="off">
+      <button class="main" id="load" type="button">読みこむ</button>
+      <span class="meta" id="stat"></span>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs" hidden>
+    <button type="button" data-v="q" class="on">1年生への質問</button>
+    <button type="button" data-v="theme">テーマ</button>
+  </div>
+  <div id="out"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API="https://kishou.ryousukey0113.workers.dev";
+const ss={get(k){try{return sessionStorage.getItem(k)||"";}catch(e){return "";}},set(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TYPE={single:"単一選択形式",multi:"複数選択形式",text:"記述形式"};
+const $=id=>document.getElementById(id);
+let items=[], view="q";
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1500);};
+async function copy(text){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select(); try{document.execCommand("copy");}catch(_){} t.remove(); }
+  toast("コピーしました");
+}
+const byWho=(a,b)=>(a.who.cls||"").localeCompare(b.who.cls||"","ja",{numeric:true})||(+a.who.no||0)-(+b.who.no||0);
+const whoText=w=>`${w.cls} ${w.no}番 ${w.name}`;
+const when=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;};
+let clips=[];
+const cp=text=>{ clips.push(text); return `<button type="button" class="cp" data-cp="${clips.length-1}">コピー</button>`; };
+function render(){
+  clips=[];
+  const list=items.filter(x=>x.kind===view).sort(byWho);
+  let h="";
+  if(!list.length) h=`<p class="empty">まだ提出はありません。</p>`;
+  else if(view==="q"){
+    const all=list.map(x=>`【${whoText(x.who)}】\n`+x.data.qs.map((q,i)=>`質問${i+1}（${TYPE[q.type]}）${q.text}`+(q.type!=="text"?"\n"+q.opts.map(o=>"・"+o).join("\n"):"")).join("\n")).join("\n\n");
+    h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(all)}<span class="meta">← 全員分を文字でまとめてコピー</span></div>`;
+    for(const x of list){
+      h+=`<div class="card"><div class="who">${esc(whoText(x.who))} <span class="meta">（${when(x.updated)}）</span></div>`;
+      x.data.qs.forEach((q,i)=>{
+        h+=`<div class="q"><div><span class="type">${TYPE[q.type]}</span>質問${i+1}</div>`+
+          `<div class="line"><span>${esc(q.text)}</span>${cp(q.text)}</div>`;
+        if(q.type!=="text"){
+          h+=`<ol>`+q.opts.map(o=>`<li><div class="line"><span>${esc(o)}</span>${cp(o)}</div></li>`).join("")+`</ol>`+
+            `<div class="row"><span class="meta">選択肢をまとめて</span>${cp(q.opts.join("\n"))}</div>`;
+        }
+        if(q.use) h+=`<div class="meta">使い方：${esc(q.use)}</div>`;
+        h+=`</div>`;
+      });
+      h+=`</div>`;
+    }
+  }else{
+    const titles=list.map(x=>`${x.data.fttl}（${x.who.name}）`).join("\n");
+    const withIntro=list.map(x=>`${x.data.fttl}（${x.who.name}）${x.data.intro?"："+x.data.intro:""}`).join("\n");
+    h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(titles)}<span class="meta">タイトル一覧</span>${cp(withIntro)}<span class="meta">ひとこと紹介つき（1年生の視聴アンケートの選択肢に）</span></div>`;
+    h+=`<div class="card"><table><thead><tr><th>生徒</th><th>タイトル</th><th>テーマ</th><th>ひとこと紹介</th><th>1年生にどうなってほしいか</th></tr></thead><tbody>`+
+      list.map(x=>`<tr><td>${esc(whoText(x.who))}<div class="meta">${when(x.updated)}</div></td><td>${esc(x.data.fttl)}</td><td>${esc(x.data.fin)}</td><td>${esc(x.data.intro)}</td><td>${esc(x.data.who)}</td></tr>`).join("")+`</tbody></table></div>`;
+  }
+  $("out").innerHTML=h;
+  $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
+}
+async function load(){
+  const pass=$("tpass").value.trim()||ss.get("bunko_tpass");
+  if(!pass){ $("stat").textContent="合言葉を入れてください"; return; }
+  $("stat").textContent="読みこみ中…";
+  try{
+    const r=await fetch(API+"/bunko/oshipre/list",{method:"POST",headers:{"Content-Type":"application/json","X-Teacher":encodeURIComponent(pass)},body:"{}"});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===401||r.status===403){ $("stat").textContent="合言葉がちがうようです"; return; }
+    if(!r.ok) throw new Error(j.message||j.error||"読みこめませんでした");
+    ss.set("bunko_tpass",pass); items=j.items||[];
+    $("stat").textContent=`読みこみました（${when(Date.now())}）`; $("tabs").hidden=false; render();
+  }catch(e){ $("stat").textContent=e.message; }
+}
+$("load").addEventListener("click",load);
+$("tpass").addEventListener("keydown",e=>{ if(e.key==="Enter") load(); });
+$("tabs").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ view=b.dataset.v; $("tabs").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); render(); }));
+if(ss.get("bunko_tpass")) load();
+</script>
+</body>
+</html>
