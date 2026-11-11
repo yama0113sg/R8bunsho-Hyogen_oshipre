@@ -44,9 +44,14 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .goal{border:1px solid color-mix(in srgb,var(--g) 50%,transparent);background:rgba(255,158,199,.08);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:14px}
 .goal h2{margin:0 0 6px;font-size:17px}
 .goal ul{margin:0;padding-left:1.2em}
-.goal li.today{color:var(--g);font-weight:900}
-.goal li.today::after{content:"  ← 今日はここまでできればOK";font-size:12px}
-.goal li.past{color:var(--sub)}
+.goal li{margin-bottom:6px}
+.goal li span{display:block}
+.goal .more{color:#d6d2ea;font-size:13px}
+.goal li.today{color:var(--g)}
+.goal li.today .must{font-weight:900}
+.goal li.today .must::after{content:"  ← 今日はここまでできればOK";font-size:12px}
+.goal li.past,.goal li.past .more{color:var(--sub)}
+.goal .ahead{margin:4px 0 0;font-size:12px;color:var(--sub)}
 .tabnav{display:flex;justify-content:space-between;gap:10px;margin:4px 0 18px}
 .tabnav .btn{flex:1}
 .sbs{display:grid;gap:8px}
@@ -630,19 +635,31 @@ renderTalk(document.getElementById("s1"),STRUCT,"coach");
 
 // タブ（日程と対応させる。その日の日付のタブを自動で開く）
 const TABS=[
-  {id:"oshi",name:"推しを決める",days:[["2026-11-10","①","推しの候補から1つに決め、AIと問答して掘り下げる"]],
+  // days：[日付, 回, 必ず（ここまでできればOK）, できたら（先取りOK）]
+  {id:"oshi",name:"推しを決める",days:[["2026-11-10","①","推しを1つに決めて、AIと問答して掘り下げる",""]],
     done:()=>has("oshi","why")},
-  {id:"q",name:"1年生への質問",days:[["2026-11-11","②","1年生への質問を2問作り、用紙で提出【締切】"]],
+  {id:"q",name:"1年生への質問",days:[["2026-11-11","②","1年生への質問を2問作り、用紙で提出【締切】",""]],
     done:()=>has("a_q1","a_q2")},
-  {id:"theme",name:"テーマを決める",days:[["2026-11-17","③","切り口カードでテーマを尖らせ、タイトルを考える"],["2026-11-18","④ 1コマ目","テーマを決めて提出【締切】"]],
+  {id:"theme",name:"テーマを決める",days:[
+      ["2026-11-11","②","テーマを1文にまとめる（1年生役のつっこみまで）","切り口カードでテーマを尖らせる"],
+      ["2026-11-17","③ 1コマ目","切り口カードでテーマを尖らせ、決定版のテーマとタイトルを書く",""],
+      ["2026-11-18","④ 1コマ目","テーマを提出【締切】",""]],
     done:()=>has("fin","fttl")},
-  {id:"kousei",name:"構成・絵コンテ",days:[["2026-11-18","④ 2コマ目","5分の構成と、スライドの絵コンテを作る"]],
+  {id:"kousei",name:"構成・絵コンテ",days:[
+      ["2026-11-17","③ 2コマ目","5分の構成（つかみ・本題①〜③・まとめ）を作る","絵コンテを作る"],
+      ["2026-11-18","④ 1コマ目","テーマを出したら、絵コンテを仕上げる",""]],
     done:()=>has("st0","st1","st2","st3","st4")&&cnt(10,i=>data["sbv"+i]||data["sbt"+i])>=6},
-  {id:"slide",name:"スライドを作る",days:[["2026-11-24","⑤","絵コンテをもとにスライドを作る（アンケート結果は枠だけ）"],["2026-11-25","⑥ 1コマ目","アンケート結果を入れて、スライドを仕上げる"]],
+  {id:"slide",name:"スライドを作る",days:[
+      ["2026-11-18","④ 2コマ目","絵コンテをもとに、スライドを作り始める",""],
+      ["2026-11-24","⑤","スライドをひととおり作る（アンケート結果は枠だけ）","ひとりで通して、時間を計ってみる"],
+      ["2026-11-25","⑥ 1コマ目","アンケート結果を入れて、スライドを仕上げる",""]],
     done:()=>cnt(9,i=>data["ck"+i])===9},
-  {id:"prac",name:"発表練習",days:[["2026-11-25","⑥ 2コマ目","ひとりで通して、5分を計る（2回）"],["2026-12-08","⑦","グループでリハーサル → 直して、もう一度"],["2026-12-09","⑧","最後の通し練習と、当日の動きの確認"]],
+  {id:"prac",name:"発表練習",days:[
+      ["2026-11-25","⑥ 2コマ目","ひとりで通して、5分を計る（2回）","となりの人に聞いてもらう"],
+      ["2026-12-08","⑦","ひとりで1回通す → グループでリハーサル","直して、グループを替えてもう一度"],
+      ["2026-12-09","⑧","最後の通し練習と、当日の動きの確認",""]],
     done:()=>cnt(6,i=>data["pt"+i])>=3},
-  {id:"honban",name:"本番・ふりかえり",days:[["2026-12-11","本番","同じ発表を4回 → 14:10からふりかえり"]],
+  {id:"honban",name:"本番・ふりかえり",days:[["2026-12-11","本番","同じ発表を4回 → 14:10からふりかえり",""]],
     done:()=>has("rf1","rf2","rf3","rf4")},
 ];
 function has(...ks){ return ks.every(k=>String(data[k]||"").trim()); }
@@ -676,7 +693,9 @@ function show(i,scroll){
   document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===TABS[i].id));
   const t=TABS[i];
   document.querySelector(`[data-goal="${t.id}"]`).innerHTML=`<h2>${esc(t.name)}</h2><ul>`+
-    t.days.map(([d,n,w])=>`<li class="${d===TODAY?"today":d<TODAY?"past":""}"><b>${md(d)}（${DOW(d)}）${esc(n)}</b>：${esc(w)}</li>`).join("")+"</ul>";
+    t.days.map(([d,n,must,more])=>`<li class="${d===TODAY?"today":d<TODAY?"past":""}"><b>${md(d)}（${DOW(d)}）${esc(n)}</b>`+
+      `<span class="must">✅ 必ず：${esc(must)}</span>`+(more?`<span class="more">🚀 できたら：${esc(more)}</span>`:"")+`</li>`).join("")+
+    `</ul><p class="ahead">「必ず」が終わったら、どんどん先のタブへ進んでOK！</p>`;
   const prev=TABS[i-1], next=TABS[i+1];
   document.getElementById("tabnav").innerHTML=(prev?`<button type="button" class="btn" data-go="${i-1}">← ${esc(prev.name)}</button>`:"<span></span>")+
     (next?`<button type="button" class="btn" data-go="${i+1}">${esc(next.name)} →</button>`:"<span></span>");
