@@ -30,7 +30,17 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .panel h2{margin:0 0 6px;font-size:18px;display:flex;align-items:center;gap:10px}
 .num{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--mincho);
   font-weight:800;color:#1a1020;background:linear-gradient(145deg,#fff,var(--g))}
+.num.plus{font-size:13px}
 .hint{font-size:13px;color:var(--sub);margin:0 0 12px}
+.cgrp{font-size:13px;font-weight:900;color:var(--g);margin:12px 0 6px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.card{font:inherit;text-align:left;cursor:pointer;color:var(--ink);background:rgba(0,0,0,.22);border:1px solid var(--edge);
+  border-radius:12px;padding:8px 10px;line-height:1.5}
+.card b{display:block;font-size:14px}
+.card .f{display:block;font-size:13px;color:#d6d2ea}
+.card .e{display:block;font-size:12px;color:var(--sub)}
+.card.on{border-color:var(--g);background:rgba(255,158,199,.14);box-shadow:0 0 0 2px color-mix(in srgb,var(--g) 40%,transparent)}
+.card.on b::before{content:"✔ ";color:var(--g)}
 .info{font-size:14px;color:#d6d2ea}
 .info b{color:var(--g)}
 .info ul{margin:6px 0 0;padding-left:1.3em}
@@ -153,6 +163,26 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
     </div>
   </div>
 
+  <!-- 4+ テーマを尖らせる（ステップ4の入力はそのまま使う） -->
+  <div class="panel">
+    <h2><span class="num plus">4＋</span>🔥 テーマを尖らせよう</h2>
+    <p class="hint">4のテーマを、「1年生が聞きたくなる」形に近づけよう。下の切り口カードから1〜2枚選んで（2枚の組み合わせもOK）、テーマを書き直してみよう。4に書いたテーマは消さなくてOK。</p>
+    <div class="ex info">
+      <b>聞きたくなるテーマの3つのものさし</b>
+      <ul>
+        <li><b>具体性</b>：推しの全部ではなく、一点にしぼれている？</li>
+        <li><b>意外性</b>：1年生が「えっ」「へえ」と思うところがある？</li>
+        <li><b>自分らしさ</b>：同じ推しの人が話しても、同じにならない？</li>
+      </ul>
+    </div>
+    <div id="cards"></div>
+    <div class="talk" style="margin-top:14px">
+      <h3>🔥 AIに尖り具合を見てもらう</h3>
+      <p class="sub">選んだカードで書き直したテーマを書いて相談しよう。AIは3つのものさしで見立てて、いちばん弱いところを問い返します。</p>
+      <div id="spice"></div>
+    </div>
+  </div>
+
   <!-- 5 -->
   <div class="panel">
     <h2><span class="num">5</span>1年生への質問を、AIと磨こう</h2>
@@ -254,13 +284,14 @@ const today=()=>new Date().toLocaleDateString("ja-JP");
 const used=()=>data.aiDay===today()?(data.aiN||0):0;
 const thread=id=>(data["th_"+id]=data["th_"+id]||[]);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const btnLabel=role=>role==="kohai"?"🙋 つっこんでもらう":role==="fit"?"🧭 AIに相談する":role==="qcheck"?"📝 AIに見てもらう":"🤖 AIに聞いてもらう";
-const FACE={coach:"🤖",kohai:"🙋",fit:"🧭",qcheck:"📝"};
+const btnLabel=role=>role==="kohai"?"🙋 つっこんでもらう":role==="fit"?"🧭 AIに相談する":role==="qcheck"?"📝 AIに見てもらう":role==="spice"?"🔥 尖り具合を見てもらう":"🤖 AIに聞いてもらう";
+const FACE={coach:"🤖",kohai:"🙋",fit:"🧭",qcheck:"📝",spice:"🔥"};
 const FITTXTS={
   fit:{ok:"◎ 推しプレゼンになっています",close:"○ あと少し",off:"△ ちょっとずれているかも"},
-  qcheck:{ok:"◎ このまま使えそう",close:"○ あと少し",off:"△ 直したいところあり"}};
+  qcheck:{ok:"◎ このまま使えそう",close:"○ あと少し",off:"△ 直したいところあり"},
+  spice:{ok:"◎ 聞きたくなる！",close:"○ あと少し",off:"△ まだ誰でも言えそう"}};
 const fitTxt=(role,f)=>(FITTXTS[role]||FITTXTS.fit)[f]||"";
-const maxOf=role=>(role==="fit"||role==="qcheck")?FIT_MAX:ROUND_MAX;
+const maxOf=role=>(role==="fit"||role==="qcheck"||role==="spice")?FIT_MAX:ROUND_MAX;
 
 function renderTalk(box,t,role){
   const id=t.id, th=thread(id), MAX=maxOf(role);
@@ -312,6 +343,47 @@ const talks=document.getElementById("talks");
 TALKS.forEach(t=>{ const d=document.createElement("div"); d.className="talk"; talks.appendChild(d); renderTalk(d,t,"coach"); });
 const KOHAI={id:"k1",ph:"上のテーマで、いちばん話したいことを一言で（例：入る順番と休み方さえ知れば、だれでも楽しめる）"};
 renderTalk(document.getElementById("kohai"),KOHAI,"kohai");
+
+// 4＋ 切り口カード（推しプレゼン向けに選んだ12種）。選んだカードは data.spc（番号の配列）に保存
+const CARDS=[
+  {g:"💗 どこが好き？",n:"一点集中型",f:"〇〇の、□□だけを5分語る",e:"例：アニメの「エンディングだけ」"},
+  {g:"💗 どこが好き？",n:"ワンシーン型",f:"この1場面・1曲・1セリフで、〇〇が分かる",e:"例：第◯話のあの1コマ"},
+  {g:"💗 どこが好き？",n:"弱点も好き型",f:"〇〇のダメなところまで、愛おしい",e:"例：弱小チームだから、1勝の重みがちがう"},
+  {g:"🔥 どれだけ好き？",n:"数字型",f:"私の「好き」を数字で見せる",e:"例：3年間で通った回数・聴いた回数"},
+  {g:"🔥 どれだけ好き？",n:"マイベスト3型",f:"私が選ぶ、〇〇のベスト3",e:"例：人生を変えたコンビニおにぎりTOP3"},
+  {g:"🔥 どれだけ好き？",n:"推し方型",f:"推しそのものより、私の「推し方」を語る",e:"例：記録ノートをつける推し方"},
+  {g:"📖 どうして好きに？",n:"転機型",f:"〇〇を知らなかった（苦手だった）私が、□□でハマった",e:"例：失敗談から入ってもOK"},
+  {g:"📖 どうして好きに？",n:"支えられた型",f:"〇〇に背中を押された瞬間",e:"例：受験期に聴き続けた1曲"},
+  {g:"🪞 好きだと何が見える？",n:"自分を映す型",f:"〇〇が好きな理由を考えたら、自分の□□が見えた",e:"例：脇役ばかり好きになる自分"},
+  {g:"🎁 1年生に届ける",n:"ギャップ型",f:"〇〇って△△と思われてるけど、私にとっては□□",e:"例：将棋は地味？ 私にとっては心理戦"},
+  {g:"🎁 1年生に届ける",n:"景色が変わる型",f:"〇〇を知ると、いつもの□□がちがって見える",e:"例：マンホールの蓋を知ると、通学路が楽しくなる"},
+  {g:"🎁 1年生に届ける",n:"届けたい相手型",f:"□□な1年生にこそ、〇〇を",e:"例：人見知りの人にこそ、ボードゲームを"},
+];
+const CARD_MAX=2;
+const picked=()=>(Array.isArray(data.spc)?data.spc:[]).filter(i=>CARDS[i]);
+const pickedNames=()=>picked().map(i=>CARDS[i].n).join("・");
+function renderCards(){
+  const box=document.getElementById("cards"), on=picked();
+  let html="", grp="";
+  CARDS.forEach((c,i)=>{
+    if(c.g!==grp){ html+=(grp?"</div>":"")+`<div class="cgrp">${c.g}</div><div class="cgrid">`; grp=c.g; }
+    html+=`<button type="button" class="card${on.includes(i)?" on":""}" data-c="${i}" aria-pressed="${on.includes(i)}"><b>${esc(c.n)}</b><span class="f">${esc(c.f)}</span><span class="e">${esc(c.e)}</span></button>`;
+  });
+  box.innerHTML=html+"</div>";
+  box.querySelectorAll("[data-c]").forEach(b=>b.addEventListener("click",()=>{
+    const i=+b.dataset.c, cur=picked();
+    if(cur.includes(i)) data.spc=cur.filter(x=>x!==i);
+    else if(cur.length>=CARD_MAX){ toast("組み合わせは2枚までにしよう"); return; }
+    else data.spc=[...cur,i];
+    save(); renderCards();
+  }));
+}
+renderCards();
+const SPICE={id:"sp1",first:"切り口カードで書き直したテーマは？",
+  ph:"選んだカードで、テーマを書き直してみよう（例：サウナが大嫌いだった私が、ある冬の1回でハマった話）",
+  q:()=>`4のテーマ：${data.m1||data.oshi||"？"}の魅力は、${data.m2||"？"}だ。／タイトル（仮）：${data.ttl||"？"}／使ってみた切り口カード：${pickedNames()||"（まだ選んでいない）"}`};
+renderTalk(document.getElementById("spice"),SPICE,"spice");
+
 const theme=()=>`テーマ：${data.m1||data.oshi||"？"}の魅力は、${data.m2||"？"}だ。`;
 const QS=[1,2].map(n=>({id:"q"+n,title:`質問${"①②"[n-1]}`,sub:"質問文・選択肢・プレゼンのどこで使うか、を書こう",first:"質問文・選択肢・使い方は？",
   ph:"例：サウナに入ったことがありますか？（ある／ない／名前は知っている）→ ない人が多ければ、入り方の説明から始める",
@@ -324,7 +396,7 @@ renderTalk(document.getElementById("s1"),STRUCT,"coach");
 // まとめ
 function summary(){
   const g=k=>(data[k]||"").trim()||"（未記入）";
-  const tl=(id,title)=>{ const out=["■ "+title,"　"+g("a_"+id)]; thread(id).forEach(x=>out.push("　AI："+(x.fit?"["+fitTxt(id[0]==="q"?"qcheck":"fit",x.fit)+"] "+(x.why||"")+" ":"")+x.ask,"　→ "+((x.ans||"").trim()||"（未記入）"))); return out.join("\n"); };
+  const tl=(id,title)=>{ const out=["■ "+title,"　"+g("a_"+id)]; thread(id).forEach(x=>out.push("　AI："+(x.fit?"["+fitTxt(id[0]==="q"?"qcheck":id==="sp1"?"spice":"fit",x.fit)+"] "+(x.why||"")+" ":"")+x.ask,"　→ "+((x.ans||"").trim()||"（未記入）"))); return out.join("\n"); };
   return [
     "【推しプレゼン 準備ワーク①】",
     "■ わたしの推し："+g("oshi"),
@@ -339,6 +411,9 @@ function summary(){
     "■ 発表タイトル（仮）："+g("ttl"),
     "",
     tl("k1","1年生のつっこみ（いちばん話したいこと）"),
+    "",
+    "■ 使った切り口カード："+(pickedNames()||"（未選択）"),
+    tl("sp1","尖らせたテーマ（AIに相談）"),
     "",
     ...QS.map(t=>tl(t.id,"1年生への"+t.title)),
     "",
