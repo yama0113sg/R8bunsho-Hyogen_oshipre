@@ -30,7 +30,37 @@ h1{font-family:var(--mincho);font-weight:800;text-align:center;font-size:clamp(2
 .panel h2{margin:0 0 6px;font-size:18px;display:flex;align-items:center;gap:10px}
 .num{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--mincho);
   font-weight:800;color:#1a1020;background:linear-gradient(145deg,#fff,var(--g))}
-.num.plus{font-size:13px}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;margin:0 -16px 14px;padding:8px 16px;
+  background:color-mix(in srgb,var(--bg0) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);scrollbar-width:thin}
+.tab{flex:none;font:inherit;cursor:pointer;text-align:left;color:var(--sub);background:var(--glass);border:1px solid var(--edge);
+  border-radius:12px;padding:6px 10px;line-height:1.35;min-width:96px;position:relative}
+.tab small{display:block;font-size:11px}
+.tab b{display:block;font-size:13px;color:var(--ink)}
+.tab.on{background:linear-gradient(135deg,color-mix(in srgb,var(--g) 30%,transparent),color-mix(in srgb,var(--g2) 30%,transparent));border-color:var(--g)}
+.tab.past:not(.on){opacity:.7}
+.tab .done{color:var(--ok);font-weight:900}
+.tab .now{position:absolute;top:-7px;right:6px;font-size:10px;font-weight:900;background:var(--g);color:#2e0716;border-radius:999px;padding:0 6px}
+.pane{display:none}.pane.on{display:block}
+.goal{border:1px solid color-mix(in srgb,var(--g) 50%,transparent);background:rgba(255,158,199,.08);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:14px}
+.goal h2{margin:0 0 6px;font-size:17px}
+.goal ul{margin:0;padding-left:1.2em}
+.goal li.today{color:var(--g);font-weight:900}
+.goal li.today::after{content:"  ← 今日はここまでできればOK";font-size:12px}
+.goal li.past{color:var(--sub)}
+.tabnav{display:flex;justify-content:space-between;gap:10px;margin:4px 0 18px}
+.tabnav .btn{flex:1}
+.sbs{display:grid;gap:8px}
+.sb{display:grid;grid-template-columns:28px 1fr;gap:6px 8px;align-items:center;border:1px solid var(--edge);border-radius:12px;padding:8px;background:rgba(0,0,0,.18)}
+.sb .sbn{grid-row:span 2;font-family:var(--mincho);font-weight:800;font-size:18px;text-align:center;color:var(--g)}
+.prows{display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;border:1px solid var(--edge);border-radius:12px;padding:8px;background:rgba(0,0,0,.18)}
+.prow b{font-size:13px}
+.prow input:not(.sm){grid-column:1/-1}
+.timer{text-align:center;margin:6px 0 12px;padding:14px;border-radius:16px;background:rgba(0,0,0,.3);border:1px solid var(--edge)}
+.timer span{display:block;font-family:var(--mincho);font-weight:800;font-size:clamp(48px,16vw,80px);line-height:1.1;font-variant-numeric:tabular-nums}
+.timer small{color:var(--sub);font-size:13px}
+.timer.warn{border-color:#ffd76a}.timer.warn span{color:#ffd76a}
+.timer.over{border-color:#ff6b8b}.timer.over span{color:#ff6b8b}
 .hint{font-size:13px;color:var(--sub);margin:0 0 12px}
 .cgrp{font-size:13px;font-weight:900;color:var(--g);margin:12px 0 6px}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -91,7 +121,8 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
 .saved{text-align:center;font-size:12px;color:var(--sub);margin-top:10px}
 @media print{
   body{background:#fff;color:#000;padding:0}
-  body::before,.row,.toast,.saved,.ex,.askrow{display:none}
+  body::before,.row,.toast,.saved,.ex,.askrow,.tabs,.tabnav,.goal{display:none}
+  .pane{display:block!important}
   .ai .bub{background:none;border:1px solid #999}
   .panel{background:none;border:1px solid #999;backdrop-filter:none;break-inside:avoid}
   h1{color:#000;-webkit-text-fill-color:#000;background:none}
@@ -103,16 +134,12 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
 <body>
 <div class="wrap">
   <h1>推しプレゼン</h1>
-  <p class="lead">準備ワーク ① ― 推しを決めて、テーマを練ろう</p>
+  <p class="lead">12/11の発表まで、このページで全部そろう準備ワーク</p>
 
-  <div class="panel info">
-    <b>これからの流れ</b>
-    <ul>
-            <li><b>11/18（水）</b>：推しプレゼンのテーマを決定</li>
-            <li><b>12/11（金）5・6限</b>：発表本番（1人5分・聞き手は1年生）</li>
-    </ul>
-  </div>
+  <nav class="tabs" id="tabs" aria-label="準備の段階"></nav>
 
+  <section class="pane" id="pane-oshi" data-pane="oshi">
+    <div class="goal" data-goal="oshi"></div>
   <!-- 1 -->
   <div class="panel">
     <h2><span class="num">1</span>推しの候補を3つ書き出そう</h2>
@@ -142,10 +169,34 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
     <div id="talks"></div>
   </div>
 
+  </section>
+
+  <section class="pane" id="pane-q" data-pane="q">
+    <div class="goal" data-goal="q"></div>
+  <!-- 5 -->
+  <div class="panel">
+    <h2><span class="num">1</span>1年生への質問を、AIと磨こう</h2>
+    <p class="hint">提出する2問を、AIに見てもらいながら直していこう。直した質問は、問い返しの答え欄に書き直していけばOK。</p>
+    <div class="ex info">
+      <b>よい質問のコツ</b>
+      <ul>
+        <li><b>選んで答える形</b>（はい／いいえ・4択・1〜5の数字など）。<b>「知らない」</b>も選択肢に</li>
+        <li>1つの質問で聞くのは<b>1つだけ</b>。「最高ですよね？」のように<b>誘導しない</b></li>
+        <li>答えを<b>プレゼンのどこで使うか</b>決めておく（つかみ？ 本題？）</li>
+      </ul>
+    </div>
+    <div class="talk"><div id="q1"></div></div>
+    <div class="talk"><div id="q2"></div></div>
+  </div>
+
+  </section>
+
+  <section class="pane" id="pane-theme" data-pane="theme">
+    <div class="goal" data-goal="theme"></div>
   <!-- 4 -->
   <div class="panel">
-    <h2><span class="num">4</span>テーマを1文にまとめよう</h2>
-    <p class="hint">5分で全部は話せません。3の問答をふりかえって、「これだけは伝えたい！」を1文にしぼろう。</p>
+    <h2><span class="num">1</span>テーマを1文にまとめよう</h2>
+    <p class="hint">5分で全部は話せません。「推しを決める」タブの問答をふりかえって、「これだけは伝えたい！」を1文にしぼろう。</p>
     <div class="oneline">
       <input type="text" data-k="m1" placeholder="サウナ" aria-label="推し">
       <span>の魅力は、</span>
@@ -165,8 +216,8 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
 
   <!-- 4+ テーマを尖らせる（ステップ4の入力はそのまま使う） -->
   <div class="panel">
-    <h2><span class="num plus">4＋</span>🔥 テーマを尖らせよう</h2>
-    <p class="hint">4のテーマを、「1年生が聞きたくなる」形に近づけよう。下の切り口カードから1〜2枚選んで（2枚の組み合わせもOK）、テーマを書き直してみよう。4に書いたテーマは消さなくてOK。</p>
+    <h2><span class="num">2</span>🔥 テーマを尖らせよう</h2>
+    <p class="hint">上のテーマを、「1年生が聞きたくなる」形に近づけよう。下の切り口カードから1〜2枚選んで（2枚の組み合わせもOK）、テーマを書き直してみよう。上に書いたテーマは消さなくてOK。</p>
     <div class="ex info">
       <b>聞きたくなるテーマの3つのものさし</b>
       <ul>
@@ -183,25 +234,23 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
     </div>
   </div>
 
-  <!-- 5 -->
   <div class="panel">
-    <h2><span class="num">5</span>1年生への質問を、AIと磨こう</h2>
-    <p class="hint">提出する2問を、AIに見てもらいながら直していこう。直した質問は、問い返しの答え欄に書き直していけばOK。</p>
-    <div class="ex info">
-      <b>よい質問のコツ</b>
-      <ul>
-        <li><b>選んで答える形</b>（はい／いいえ・4択・1〜5の数字など）。<b>「知らない」</b>も選択肢に</li>
-        <li>1つの質問で聞くのは<b>1つだけ</b>。「最高ですよね？」のように<b>誘導しない</b></li>
-        <li>答えを<b>プレゼンのどこで使うか</b>決めておく（つかみ？ 本題？）</li>
-      </ul>
-    </div>
-    <div class="talk"><div id="q1"></div></div>
-    <div class="talk"><div id="q2"></div></div>
+    <h2><span class="num">3</span>提出するテーマを決めよう</h2>
+    <p class="hint">上の1・2をふまえて、提出するテーマを書こう。11/18の締切の日に、用紙に写して出します。</p>
+    <label for="fin">テーマ（決定版）</label>
+    <input type="text" id="fin" data-k="fin" placeholder="例：サウナが大嫌いだった私が、ある冬の1回でハマった話">
+    <label for="fttl">発表タイトル（決定版）</label>
+    <input type="text" id="fttl" data-k="fttl" placeholder="例：90分で人生が整う ― サウナ嫌いだった私へ">
+    <label for="intro">ひとこと紹介（30字くらい・先生から指示があったら書こう）</label>
+    <input type="text" id="intro" data-k="intro" placeholder="例：サウナ嫌いだった私が、入り方ひとつで変わった話をします">
   </div>
+  </section>
 
+  <section class="pane" id="pane-kousei" data-pane="kousei">
+    <div class="goal" data-goal="kousei"></div>
   <!-- 6 -->
   <div class="panel">
-    <h2><span class="num">6</span>5分の構成を組んでみよう</h2>
+    <h2><span class="num">1</span>5分の構成を組んでみよう</h2>
     <p class="hint">まだざっくりでOK。どの順番で話すと、1年生が最後まで聞いてくれるかな？</p>
     <label>つかみ（〜30秒）：最初のひとことで、どう引きこむ？</label>
     <input type="text" data-k="st0" placeholder="例：「サウナって、ただ暑いだけだと思ってませんか？」と問いかける">
@@ -219,6 +268,192 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
       <div id="s1"></div>
     </div>
   </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>スライドの絵コンテを作ろう</h2>
+    <p class="hint">パワポやKeynoteを開く前に、ここで「1枚ずつ、何を見せて何を話すか」を決めておこう。5分なら6〜10枚が目安。使わない行は空欄でOK。アンケート結果を入れるスライドも、1枚決めておこう。</p>
+    <div class="sbs">
+      <div class="sb"><span class="sbn">1</span>
+        <input type="text" data-k="sbv0" placeholder="見せるもの（例：入口の写真＋「90分で人生が変わる？」）" aria-label="スライド1で見せるもの">
+        <input type="text" data-k="sbt0" placeholder="話すこと（例：問いかけでつかむ）" aria-label="スライド1で話すこと"></div>
+      <div class="sb"><span class="sbn">2</span>
+        <input type="text" data-k="sbv1" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド2で見せるもの">
+        <input type="text" data-k="sbt1" placeholder="話すこと（ひとこと）" aria-label="スライド2で話すこと"></div>
+      <div class="sb"><span class="sbn">3</span>
+        <input type="text" data-k="sbv2" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド3で見せるもの">
+        <input type="text" data-k="sbt2" placeholder="話すこと（ひとこと）" aria-label="スライド3で話すこと"></div>
+      <div class="sb"><span class="sbn">4</span>
+        <input type="text" data-k="sbv3" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド4で見せるもの">
+        <input type="text" data-k="sbt3" placeholder="話すこと（ひとこと）" aria-label="スライド4で話すこと"></div>
+      <div class="sb"><span class="sbn">5</span>
+        <input type="text" data-k="sbv4" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド5で見せるもの">
+        <input type="text" data-k="sbt4" placeholder="話すこと（ひとこと）" aria-label="スライド5で話すこと"></div>
+      <div class="sb"><span class="sbn">6</span>
+        <input type="text" data-k="sbv5" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド6で見せるもの">
+        <input type="text" data-k="sbt5" placeholder="話すこと（ひとこと）" aria-label="スライド6で話すこと"></div>
+      <div class="sb"><span class="sbn">7</span>
+        <input type="text" data-k="sbv6" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド7で見せるもの">
+        <input type="text" data-k="sbt6" placeholder="話すこと（ひとこと）" aria-label="スライド7で話すこと"></div>
+      <div class="sb"><span class="sbn">8</span>
+        <input type="text" data-k="sbv7" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド8で見せるもの">
+        <input type="text" data-k="sbt7" placeholder="話すこと（ひとこと）" aria-label="スライド8で話すこと"></div>
+      <div class="sb"><span class="sbn">9</span>
+        <input type="text" data-k="sbv8" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド9で見せるもの">
+        <input type="text" data-k="sbt8" placeholder="話すこと（ひとこと）" aria-label="スライド9で話すこと"></div>
+      <div class="sb"><span class="sbn">10</span>
+        <input type="text" data-k="sbv9" placeholder="見せるもの（写真・図・ことば）" aria-label="スライド10で見せるもの">
+        <input type="text" data-k="sbt9" placeholder="話すこと（ひとこと）" aria-label="スライド10で話すこと"></div>
+    </div>
+  </div>
+  </section>
+
+  <section class="pane" id="pane-slide" data-pane="slide">
+    <div class="goal" data-goal="slide"></div>
+  <div class="panel">
+    <h2><span class="num">1</span>スライドのルール</h2>
+    <div class="ex info">
+      <ul>
+        <li>Keynote でもパワポでもOK。<b>自分の端末で映して</b>発表します。</li>
+        <li><b>1枚に伝えることは1つ</b>。絵コンテの1行が、スライド1枚。</li>
+        <li><b>文字は少なく、写真や図を大きく</b>。話すことまで全部書かない。</li>
+        <li><b>アニメーションは使わない</b>。凝りはじめると、時間がいくらあっても足りません。</li>
+        <li>⑤（11/24）では、アンケート結果のスライドは<b>枠だけ</b>作っておこう。結果は⑥（11/25）で入れます。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="panel">
+    <h2><span class="num">2</span>アンケート結果をどう使う？</h2>
+    <p class="hint">1年生のアンケート結果が届いたら書こう。「1年生の◯割が〜」と、どのスライドで使う？</p>
+    <label for="qr1">質問①の結果と使い方</label>
+    <textarea id="qr1" data-k="qr1" placeholder="例：「サウナに入ったことがない」が68％ → つかみのスライドで「3人に2人は未体験」と見せる"></textarea>
+    <label for="qr2">質問②の結果と使い方</label>
+    <textarea id="qr2" data-k="qr2"></textarea>
+  </div>
+  <div class="panel check">
+    <h2><span class="num">3</span>できあがりチェック</h2>
+    <p class="hint">全部にチェックがついたら、スライドは完成！</p>
+      <label><input type="checkbox" data-k="ck0">スライドは6〜10枚になっている</label>
+      <label><input type="checkbox" data-k="ck1">1枚に伝えることは1つだけ</label>
+      <label><input type="checkbox" data-k="ck2">文字は大きく、少なく（1枚20字くらいまで）</label>
+      <label><input type="checkbox" data-k="ck3">写真や図を大きく使っている</label>
+      <label><input type="checkbox" data-k="ck4">アニメーションは使っていない（切りかえだけ）</label>
+      <label><input type="checkbox" data-k="ck5">アンケート結果のスライドがある</label>
+      <label><input type="checkbox" data-k="ck6">最後のスライドで、1年生に残したいことが伝わる</label>
+      <label><input type="checkbox" data-k="ck7">写真の出どころ（自分で撮った／どこから借りた）を書いている</label>
+      <label><input type="checkbox" data-k="ck8">自分の端末で、全画面にして最初から最後まで映せた</label>
+  </div>
+  </section>
+
+  <section class="pane" id="pane-prac" data-pane="prac">
+    <div class="goal" data-goal="prac"></div>
+  <div class="panel">
+    <h2><span class="num">1</span>5分タイマーで通してみよう</h2>
+    <p class="hint">スライドを映して、本番と同じように声に出して通そう。4分で黄色、5分で赤になります。終わったら「記録する」で、下の練習記録に時間が入ります。</p>
+    <div class="timer" id="timer"><span id="tm">0:00</span><small id="tmsg">スタートを押そう</small></div>
+    <div class="row">
+      <button class="btn main" id="tStart" type="button">▶ スタート</button>
+      <button class="btn" id="tReset" type="button">↺ リセット</button>
+      <button class="btn" id="tRec" type="button">📝 記録する</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2><span class="num">2</span>練習の記録</h2>
+    <p class="hint">本番は同じ発表を4回します。練習は3回以上が目標。1回ごとに「次に直すこと」を1つ決めよう。</p>
+    <div class="prows">
+      <div class="prow"><b>1回目</b>
+        <input type="text" data-k="pd0" placeholder="日付" aria-label="1回目の日付" class="sm">
+        <input type="text" data-k="pt0" placeholder="時間" aria-label="1回目にかかった時間" class="sm">
+        <input type="text" data-k="pg0" placeholder="よかったこと" aria-label="1回目のよかったこと">
+        <input type="text" data-k="pf0" placeholder="次に直すこと" aria-label="1回目に直すこと"></div>
+      <div class="prow"><b>2回目</b>
+        <input type="text" data-k="pd1" placeholder="日付" aria-label="2回目の日付" class="sm">
+        <input type="text" data-k="pt1" placeholder="時間" aria-label="2回目にかかった時間" class="sm">
+        <input type="text" data-k="pg1" placeholder="よかったこと" aria-label="2回目のよかったこと">
+        <input type="text" data-k="pf1" placeholder="次に直すこと" aria-label="2回目に直すこと"></div>
+      <div class="prow"><b>3回目</b>
+        <input type="text" data-k="pd2" placeholder="日付" aria-label="3回目の日付" class="sm">
+        <input type="text" data-k="pt2" placeholder="時間" aria-label="3回目にかかった時間" class="sm">
+        <input type="text" data-k="pg2" placeholder="よかったこと" aria-label="3回目のよかったこと">
+        <input type="text" data-k="pf2" placeholder="次に直すこと" aria-label="3回目に直すこと"></div>
+      <div class="prow"><b>4回目</b>
+        <input type="text" data-k="pd3" placeholder="日付" aria-label="4回目の日付" class="sm">
+        <input type="text" data-k="pt3" placeholder="時間" aria-label="4回目にかかった時間" class="sm">
+        <input type="text" data-k="pg3" placeholder="よかったこと" aria-label="4回目のよかったこと">
+        <input type="text" data-k="pf3" placeholder="次に直すこと" aria-label="4回目に直すこと"></div>
+      <div class="prow"><b>5回目</b>
+        <input type="text" data-k="pd4" placeholder="日付" aria-label="5回目の日付" class="sm">
+        <input type="text" data-k="pt4" placeholder="時間" aria-label="5回目にかかった時間" class="sm">
+        <input type="text" data-k="pg4" placeholder="よかったこと" aria-label="5回目のよかったこと">
+        <input type="text" data-k="pf4" placeholder="次に直すこと" aria-label="5回目に直すこと"></div>
+      <div class="prow"><b>6回目</b>
+        <input type="text" data-k="pd5" placeholder="日付" aria-label="6回目の日付" class="sm">
+        <input type="text" data-k="pt5" placeholder="時間" aria-label="6回目にかかった時間" class="sm">
+        <input type="text" data-k="pg5" placeholder="よかったこと" aria-label="6回目のよかったこと">
+        <input type="text" data-k="pf5" placeholder="次に直すこと" aria-label="6回目に直すこと"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2><span class="num">3</span>グループリハーサル（⑦ 12/8）</h2>
+    <div class="ex info">
+      <b>聞く人は、ここを見て感想を伝えよう</b>
+      <ul>
+        <li>最初の30秒で、引きこまれた？</li>
+        <li>発表者の「好き」が伝わってきた？ いちばん伝わったのはどこ？</li>
+        <li>いちばん印象に残ったスライドは？</li>
+        <li>5分におさまった？ 早口になっていなかった？</li>
+        <li>聞き手（1年生）のほうを見て話せていた？</li>
+      </ul>
+    </div>
+    <label for="pfb">もらった感想のメモ</label>
+    <textarea id="pfb" data-k="pfb" placeholder="例：つかみの写真がよかった／本題②が長い"></textarea>
+  </div>
+  <div class="panel">
+    <h2><span class="num">4</span>当日の動き（⑧ 12/9に確認）</h2>
+    <div class="ex info">
+      <ul>
+        <li>12月11日（金）5・6限。<b>同じ発表を4回</b>します：<b>12:55・13:10・13:45・14:00</b></li>
+        <li>13:30〜13:40は休憩・移動。14:10から、発表者はふりかえり。</li>
+        <li>1回目の反応を見て、2回目以降を少しずつ良くしていこう。</li>
+      </ul>
+    </div>
+    <div class="check">
+      <label><input type="checkbox" data-k="dc0">端末を充電した（充電器も持った）</label>
+      <label><input type="checkbox" data-k="dc1">スライドを全画面で映す手順を確かめた</label>
+      <label><input type="checkbox" data-k="dc2">通知を切った（おやすみモードなど）</label>
+      <label><input type="checkbox" data-k="dc3">音を使うなら、音量を確かめた</label>
+      <label><input type="checkbox" data-k="dc4">発表する教室と時刻を確かめた</label>
+    </div>
+  </div>
+  </section>
+
+  <section class="pane" id="pane-honban" data-pane="honban">
+    <div class="goal" data-goal="honban"></div>
+  <div class="panel">
+    <h2><span class="num">1</span>4回の発表メモ</h2>
+    <p class="hint">1回終わるごとに、短くていいので書いておこう。</p>
+      <label for="hb0">1回目（12:55）：1年生の反応は？ 次に変えることは？</label>
+      <textarea id="hb0" data-k="hb0" placeholder="例：つかみの問いかけで笑いが起きた。本題②は早口になったので、次はゆっくり"></textarea>
+      <label for="hb1">2回目（13:10）：1年生の反応は？ 次に変えることは？</label>
+      <textarea id="hb1" data-k="hb1" placeholder=""></textarea>
+      <label for="hb2">3回目（13:45）：1年生の反応は？ 次に変えることは？</label>
+      <textarea id="hb2" data-k="hb2" placeholder=""></textarea>
+      <label for="hb3">4回目（14:00）：1年生の反応は？ 次に変えることは？</label>
+      <textarea id="hb3" data-k="hb3" placeholder=""></textarea>
+  </div>
+  <div class="panel">
+    <h2><span class="num">2</span>ふりかえり（14:10〜）</h2>
+    <label for="rf1">自分の「好き」は、1年生に伝わった？ どんなところでそう感じた？</label>
+    <textarea id="rf1" data-k="rf1"></textarea>
+    <label for="rf2">推しプレゼンを準備して、自分について気づいたことは？</label>
+    <textarea id="rf2" data-k="rf2"></textarea>
+    <label for="rf3">4回の発表で、変えたこと・わかったことは？</label>
+    <textarea id="rf3" data-k="rf3"></textarea>
+    <label for="rf4">これから、人に何かを伝えるときに生かしたいことは？</label>
+    <textarea id="rf4" data-k="rf4"></textarea>
+  </div>
+  </section>
+
+  <div class="tabnav" id="tabnav"></div>
 
   <div class="row">
     <button class="btn main" id="copy">📋 まとめてコピー</button>
@@ -381,7 +616,7 @@ function renderCards(){
 renderCards();
 const SPICE={id:"sp1",first:"切り口カードで書き直したテーマは？",
   ph:"選んだカードで、テーマを書き直してみよう（例：サウナが大嫌いだった私が、ある冬の1回でハマった話）",
-  q:()=>`4のテーマ：${data.m1||data.oshi||"？"}の魅力は、${data.m2||"？"}だ。／タイトル（仮）：${data.ttl||"？"}／使ってみた切り口カード：${pickedNames()||"（まだ選んでいない）"}`};
+  q:()=>`今のテーマ：${data.m1||data.oshi||"？"}の魅力は、${data.m2||"？"}だ。／タイトル（仮）：${data.ttl||"？"}／使ってみた切り口カード：${pickedNames()||"（まだ選んでいない）"}`};
 renderTalk(document.getElementById("spice"),SPICE,"spice");
 
 const theme=()=>`テーマ：${data.m1||data.oshi||"？"}の魅力は、${data.m2||"？"}だ。`;
@@ -393,12 +628,97 @@ const STRUCT={id:"s1",first:"構成で迷っているところは？",ph:"例：
   q:()=>`5分の構成（${theme()}）／つかみ：${data.st0||"？"}／本題①：${data.st1||"？"}／本題②：${data.st2||"？"}／本題③：${data.st3||"？"}／まとめ：${data.st4||"？"}`};
 renderTalk(document.getElementById("s1"),STRUCT,"coach");
 
+// タブ（日程と対応させる。その日の日付のタブを自動で開く）
+const TABS=[
+  {id:"oshi",name:"推しを決める",days:[["2026-11-10","①","推しの候補から1つに決め、AIと問答して掘り下げる"]],
+    done:()=>has("oshi","why")},
+  {id:"q",name:"1年生への質問",days:[["2026-11-11","②","1年生への質問を2問作り、用紙で提出【締切】"]],
+    done:()=>has("a_q1","a_q2")},
+  {id:"theme",name:"テーマを決める",days:[["2026-11-17","③","切り口カードでテーマを尖らせ、タイトルを考える"],["2026-11-18","④ 1コマ目","テーマを決めて提出【締切】"]],
+    done:()=>has("fin","fttl")},
+  {id:"kousei",name:"構成・絵コンテ",days:[["2026-11-18","④ 2コマ目","5分の構成と、スライドの絵コンテを作る"]],
+    done:()=>has("st0","st1","st2","st3","st4")&&cnt(10,i=>data["sbv"+i]||data["sbt"+i])>=6},
+  {id:"slide",name:"スライドを作る",days:[["2026-11-24","⑤","絵コンテをもとにスライドを作る（アンケート結果は枠だけ）"],["2026-11-25","⑥ 1コマ目","アンケート結果を入れて、スライドを仕上げる"]],
+    done:()=>cnt(9,i=>data["ck"+i])===9},
+  {id:"prac",name:"発表練習",days:[["2026-11-25","⑥ 2コマ目","ひとりで通して、5分を計る（2回）"],["2026-12-08","⑦","グループでリハーサル → 直して、もう一度"],["2026-12-09","⑧","最後の通し練習と、当日の動きの確認"]],
+    done:()=>cnt(6,i=>data["pt"+i])>=3},
+  {id:"honban",name:"本番・ふりかえり",days:[["2026-12-11","本番","同じ発表を4回 → 14:10からふりかえり"]],
+    done:()=>has("rf1","rf2","rf3","rf4")},
+];
+function has(...ks){ return ks.every(k=>String(data[k]||"").trim()); }
+function cnt(n,f){ let c=0; for(let i=0;i<n;i++) if(f(i)&&String(f(i)).trim()) c++; return c; }
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const TODAY=ymd(new Date());
+const md=s=>`${+s.slice(5,7)}/${+s.slice(8,10)}`;
+const DOW=s=>"日月火水木金土"[new Date(s+"T00:00:00").getDay()];
+function startTab(){
+  let pick=TABS.findIndex(t=>t.days.some(d=>d[0]===TODAY));
+  if(pick<0) TABS.forEach((t,i)=>{ if(t.days.some(d=>d[0]<TODAY)) pick=i; });
+  return Math.max(0,pick);
+}
+let cur=startTab();
+// タブのボタンは1回だけ作り、あとは中身だけ書きかえる（作り直すと、押したボタンが消えてクリックが届かないため）
+const tabsEl=document.getElementById("tabs");
+tabsEl.innerHTML=TABS.map((t,i)=>`<button type="button" class="tab" data-t="${i}"></button>`).join("");
+tabsEl.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>show(+b.dataset.t,true)));
+function paintTabs(){
+  tabsEl.querySelectorAll(".tab").forEach(b=>{
+    const i=+b.dataset.t, t=TABS[i];
+    const dates=[...new Set(t.days.map(d=>md(d[0])))].join("・"), now=t.days.some(d=>d[0]===TODAY), past=t.days.every(d=>d[0]<TODAY);
+    b.className="tab"+(i===cur?" on":"")+(past?" past":"");
+    b.setAttribute("aria-current",i===cur?"step":"false");
+    const html=`${now?'<span class="now">今日</span>':""}<small>${dates}</small><b>${t.done()?'<span class="done">✔ </span>':""}${esc(t.name)}</b>`;
+    if(b.innerHTML!==html) b.innerHTML=html;
+  });
+}
+function show(i,scroll){
+  cur=i;
+  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===TABS[i].id));
+  const t=TABS[i];
+  document.querySelector(`[data-goal="${t.id}"]`).innerHTML=`<h2>${esc(t.name)}</h2><ul>`+
+    t.days.map(([d,n,w])=>`<li class="${d===TODAY?"today":d<TODAY?"past":""}"><b>${md(d)}（${DOW(d)}）${esc(n)}</b>：${esc(w)}</li>`).join("")+"</ul>";
+  const prev=TABS[i-1], next=TABS[i+1];
+  document.getElementById("tabnav").innerHTML=(prev?`<button type="button" class="btn" data-go="${i-1}">← ${esc(prev.name)}</button>`:"<span></span>")+
+    (next?`<button type="button" class="btn" data-go="${i+1}">${esc(next.name)} →</button>`:"<span></span>");
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(+b.dataset.go,true)));
+  paintTabs();
+  const on=document.querySelector("#tabs .tab.on"); if(on) on.scrollIntoView({block:"nearest",inline:"center"});
+  if(scroll) window.scrollTo({top:0,behavior:"smooth"});
+}
+show(cur,false);
+["input","change","click"].forEach(ev=>document.addEventListener(ev,paintTabs));
+
+// 5分タイマー（保存しない）
+let tBase=0,tAcc=0,tRun=false,tId=null;
+const tEl=document.getElementById("timer"), tm=document.getElementById("tm"), tmsg=document.getElementById("tmsg"), tStart=document.getElementById("tStart");
+const tNow=()=>tAcc+(tRun?Date.now()-tBase:0);
+const fmt=ms=>{ const s=Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+function tPaint(){
+  const ms=tNow(); tm.textContent=fmt(ms);
+  tEl.classList.toggle("warn",ms>=240000&&ms<300000); tEl.classList.toggle("over",ms>=300000);
+  tmsg.textContent=ms>=300000?"5分をこえました":ms>=240000?"あと1分！ まとめに入ろう":tRun?"計っています…":ms?"止めています":"スタートを押そう";
+}
+tStart.addEventListener("click",()=>{
+  if(tRun){ tAcc=tNow(); tRun=false; clearInterval(tId); tStart.textContent="▶ つづける"; }
+  else{ tBase=Date.now(); tRun=true; tId=setInterval(tPaint,250); tStart.textContent="⏸ 止める"; }
+  tPaint();
+});
+document.getElementById("tReset").addEventListener("click",()=>{ tRun=false; clearInterval(tId); tAcc=0; tStart.textContent="▶ スタート"; tPaint(); });
+document.getElementById("tRec").addEventListener("click",()=>{
+  const ms=tNow(); if(ms<10000){ toast("通して話してから記録しよう"); return; }
+  let i=0; while(i<6&&String(data["pt"+i]||"").trim()) i++;
+  if(i>=6){ toast("記録欄がいっぱいです"); return; }
+  data["pt"+i]=fmt(ms); if(!String(data["pd"+i]||"").trim()) data["pd"+i]=md(TODAY);
+  ["pt","pd"].forEach(k=>{ const el=document.querySelector(`[data-k="${k}${i}"]`); if(el) el.value=data[k+i]; });
+  save(); paintTabs(); toast(`${i+1}回目の練習に ${fmt(ms)} を記録しました`);
+});
+
 // まとめ
 function summary(){
   const g=k=>(data[k]||"").trim()||"（未記入）";
   const tl=(id,title)=>{ const out=["■ "+title,"　"+g("a_"+id)]; thread(id).forEach(x=>out.push("　AI："+(x.fit?"["+fitTxt(id[0]==="q"?"qcheck":id==="sp1"?"spice":"fit",x.fit)+"] "+(x.why||"")+" ":"")+x.ask,"　→ "+((x.ans||"").trim()||"（未記入）"))); return out.join("\n"); };
   return [
-    "【推しプレゼン 準備ワーク①】",
+    "【推しプレゼン 準備ワーク】",
     "■ わたしの推し："+g("oshi"),
     "■ 選んだ理由："+g("why"),
     "",
@@ -415,11 +735,35 @@ function summary(){
     "■ 使った切り口カード："+(pickedNames()||"（未選択）"),
     tl("sp1","尖らせたテーマ（AIに相談）"),
     "",
+    "■ テーマ（決定版）："+g("fin"),
+    "■ 発表タイトル（決定版）："+g("fttl"),
+    "■ ひとこと紹介："+g("intro"),
+    "",
     ...QS.map(t=>tl(t.id,"1年生への"+t.title)),
     "",
     "■ 5分の構成",
     "　つかみ："+g("st0"),"　本題①："+g("st1"),"　本題②："+g("st2"),"　本題③："+g("st3"),"　まとめ："+g("st4"),
-    tl("s1","構成の相談")
+    tl("s1","構成の相談"),
+    "",
+    "■ 絵コンテ",
+    ...Array.from({length:10},(_,i)=>(data["sbv"+i]||data["sbt"+i])?`　${i+1}．見せる：${g("sbv"+i)}／話す：${g("sbt"+i)}`:"").filter(Boolean),
+    "",
+    "■ アンケート結果の使い方",
+    "　質問①："+g("qr1"),"　質問②："+g("qr2"),
+    "■ スライドのチェック："+cnt(9,i=>data["ck"+i])+"／9",
+    "",
+    "■ 練習の記録",
+    ...Array.from({length:6},(_,i)=>data["pt"+i]?`　${i+1}回目（${g("pd"+i)}）${g("pt"+i)}　よかった：${g("pg"+i)}／直す：${g("pf"+i)}`:"").filter(Boolean),
+    "■ もらった感想："+g("pfb"),
+    "",
+    "■ 本番の発表メモ",
+    ...[0,1,2,3].map(i=>`　${i+1}回目：`+g("hb"+i)),
+    "",
+    "■ ふりかえり",
+    "　「好き」は伝わった？："+g("rf1"),
+    "　自分について気づいたこと："+g("rf2"),
+    "　4回で変えたこと・わかったこと："+g("rf3"),
+    "　これから生かしたいこと："+g("rf4")
   ].join("\n");
 }
 document.getElementById("copy").addEventListener("click",async()=>{
