@@ -203,8 +203,9 @@ textarea.need{border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(-
   </div>
   <div class="panel">
     <h2><span class="num">3</span>AIと問答して、推しを掘り下げよう</h2>
-    <p class="hint">答えを書いて「AIに聞いてもらう」を押すと、AIが問い返してきます。答えは教えてくれません。考えるのはあなたです。1つの問いにつき、問い返しは3回まで。</p>
+    <p class="hint">答えを書いて「AIに聞いてもらう」を押すと、AIが問い返してきます。答えは教えてくれません。考えるのはあなたです。1つの問いにつき、問い返しは3回まで。テーマや推しを変えたときは、それぞれの「↺ やりとりをリセット」で相談し直せます。</p>
     <div id="talks"></div>
+    <div class="row"><button type="button" class="btn small" id="resetOshi">↺ 推しを変えたので、このタブのAIとのやりとりをまとめてリセット</button></div>
   </div>
   <div class="panel">
     <h2><span class="num">4</span>📒 ネタ帳をつくろう</h2>
@@ -676,12 +677,18 @@ function renderTalk(box,t,role){
     `<textarea data-a placeholder="${esc(t.ph||"思いつくことを、短くてもいいので書いてみよう")}">${esc(data["a_"+id]||"")}</textarea>`+
     th.map((x,i)=>`<div class="ai"><span class="face">${FACE[role]}</span><div class="bub">${x.fit?`<span class="badge ${x.fit}">${fitTxt(role,x.fit)}</span>`:""}${x.why?`<span class="why">${esc(x.why)}</span>`:""}${esc(x.ask)}</div></div>
       <textarea data-i="${i}" placeholder="この問いに答えてみよう">${esc(x.ans||"")}</textarea>`).join("")+
-    `<div class="askrow"><span class="note">${th.length>=MAX?"問い返しはここまで。じっくり答えてみよう":`問い返し ${th.length}/${MAX}`}</span>
+    `<div class="askrow">${th.length?`<button type="button" class="btn small reset-btn" title="テーマや推しを変えたときに">↺ やりとりをリセット</button>`:""}<span class="note">${th.length>=MAX?"問い返しはここまで。テーマを変えたら、リセットして相談し直せます":`問い返し ${th.length}/${MAX}`}</span>
       <button class="btn ai-btn" ${th.length>=MAX?"disabled":""}>${btnLabel(role)}</button></div>`;
   box.querySelector("[data-a]").addEventListener("input",e=>{data["a_"+id]=e.target.value;save();});
   box.querySelectorAll("[data-i]").forEach(el=>el.addEventListener("input",()=>{th[+el.dataset.i].ans=el.value;save();}));
   const btn=box.querySelector(".ai-btn");
   btn.addEventListener("click",()=>ask(box,t,role,btn));
+  // テーマや推しを途中で変えたとき用：AIの問いと答えを消して、問い返しを最初から使えるようにする（いちばん上の自分の文は残す）
+  const rb=box.querySelector(".reset-btn");
+  if(rb) rb.addEventListener("click",()=>{
+    if(!confirm("AIとのやりとり（AIの問いと、その答え）を消して、最初から相談し直します。いちばん上に書いた文は残ります。いいですか？")) return;
+    data["th_"+id]=[]; save(); renderTalk(box,t,role); toast("リセットしました。上の文を書き直して、もう一度相談しよう");
+  });
 }
 async function ask(box,t,role,btn){
   const id=t.id, th=thread(id), first=data["a_"+id]||"";
@@ -715,6 +722,10 @@ async function ask(box,t,role,btn){
     btn.disabled=false; btn.textContent=btnLabel(role);
   }
 }
+document.getElementById("resetOshi").addEventListener("click",()=>{
+  if(!confirm("「推しになってる？」の相談と、3つの問答の、AIとのやりとりをまとめて消します。自分で書いた最初の文は残ります。いいですか？")) return;
+  ["f1","t1","t2","t3"].forEach(id=>data["th_"+id]=[]); save(); location.reload();
+});
 renderTalk(document.getElementById("fit"),{id:"f1",ph:"どんな発表にしたい？（例：付き合うなら顔と性格どっちを重視するか）"},"fit");
 const talks=document.getElementById("talks");
 TALKS.forEach(t=>{ const d=document.createElement("div"); d.className="talk"; talks.appendChild(d); renderTalk(d,t,"coach"); });
