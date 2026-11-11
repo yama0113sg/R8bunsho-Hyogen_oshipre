@@ -40,7 +40,7 @@ th,td{border-bottom:1px solid var(--edge);padding:6px;text-align:left;vertical-a
 <body>
 <div class="wrap">
   <h1>推しプレゼン 先生用</h1>
-  <p class="lead">生徒が提出した「1年生への質問」と「テーマ」を見て、Classi のアンケートに写すためのページです。生徒が出し直すと、上書きされます。</p>
+  <p class="lead">生徒が提出した「1年生への質問」と「テーマ」を見て、Classi のアンケートに写すためのページです。生徒が出し直すと、上書きされます。「生徒の一覧」では、じゅもんと進み具合が見られます。</p>
 
   <div class="card">
     <div class="row">
@@ -53,6 +53,7 @@ th,td{border-bottom:1px solid var(--edge);padding:6px;text-align:left;vertical-a
   <div class="tabs" id="tabs" hidden>
     <button type="button" data-v="q" class="on">1年生への質問</button>
     <button type="button" data-v="theme">テーマ</button>
+    <button type="button" data-v="st">生徒の一覧（じゅもん・進み具合）</button>
   </div>
   <div id="out"></div>
 </div>
@@ -63,14 +64,14 @@ const ss={get(k){try{return sessionStorage.getItem(k)||"";}catch(e){return "";}}
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TYPE={single:"単一選択形式",multi:"複数選択形式",text:"記述形式"};
 const $=id=>document.getElementById(id);
-let items=[], view="q";
+let items=[], students=[], view="q";
 const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1500);};
 async function copy(text){
   try{ await navigator.clipboard.writeText(text); }
   catch(e){ const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select(); try{document.execCommand("copy");}catch(_){} t.remove(); }
   toast("コピーしました");
 }
-const byWho=(a,b)=>(a.created||0)-(b.created||0);
+const byWho=(a,b)=>((a.who&&a.who.cls)||"~").localeCompare((b.who&&b.who.cls)||"~","ja",{numeric:true})||(+(a.who&&a.who.no)||999)-(+(b.who&&b.who.no)||999)||(a.created||0)-(b.created||0);
 // 名前は集めない方針（送られてきたときだけ出す）
 const whoText=(w,i)=>(w&&w.name)?`${w.cls||""} ${w.no?w.no+"番 ":""}${w.name}`.trim():`提出 ${i+1}`;
 const when=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;};
@@ -78,9 +79,13 @@ let clips=[];
 const cp=text=>{ clips.push(text); return `<button type="button" class="cp" data-cp="${clips.length-1}">コピー</button>`; };
 function render(){
   clips=[];
+  if(view==="st") return renderStudents();
   const list=items.filter(x=>x.kind===view).sort(byWho);
   let h="";
-  if(!list.length) h=`<p class="empty">まだ提出はありません。</p>`;
+  // まだ出していない生徒（はじめに名前を入れた生徒のうち、この提出がない人）
+  const done=new Set(list.map(x=>x.token)), notyet=students.filter(x=>!done.has(x.owner)).sort(byWho);
+  if(students.length) h+=`<div class="card"><b>まだ出していない：${notyet.length}人</b>${notyet.length?`<div class="meta">${notyet.map(x=>esc(whoText(x.who,0))).join("　")}</div>`:""}<div class="meta">（ページを開いて名前を入れた生徒の中から。まだ一度も開いていない生徒は、ここに出ません）</div></div>`;
+  if(!list.length) h+=`<p class="empty">まだ提出はありません。</p>`;
   else if(view==="q"){
     const all=list.map((x,i)=>`【${whoText(x.who,i)}】\n`+x.data.qs.map((q,i)=>`質問${i+1}（${TYPE[q.type]}）${q.text}`+(q.type!=="text"?"\n"+q.opts.map(o=>"・"+o).join("\n"):"")).join("\n")).join("\n\n");
     h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(all)}<span class="meta">← 全員分を文字でまとめてコピー</span></div>`;
@@ -108,6 +113,17 @@ function render(){
   $("out").innerHTML=h;
   $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
 }
+function renderStudents(){
+  clips=[];
+  const L=students.slice().sort(byWho), sub=k=>new Set(items.filter(x=>x.kind===k).map(x=>x.token));
+  const sq=sub("q"), sth=sub("theme"), ok=b=>b?"✔":"—";
+  let h=`<div class="card"><span>${L.length}人</span><div class="meta">じゅもんを忘れた生徒には、ここのじゅもんを教えてください（別の端末で「じゅもんで呼び出す」に入れると、続きが開けます）。</div></div>`;
+  h+=`<div class="card"><table><thead><tr><th>生徒</th><th>じゅもん</th><th>推し／タイトル</th><th>質問</th><th>テーマ</th><th>構成</th><th>絵コンテ</th><th>スライド</th><th>練習</th></tr></thead><tbody>`+
+    L.map(x=>`<tr><td>${esc(whoText(x.who,0))}<div class="meta">${when(x.savedAt)} に預けた</div></td><td>${esc(x.code)} ${cp(x.code)}</td><td>${esc(x.oshi)}${x.fttl?`<div class="meta">${esc(x.fttl)}</div>`:""}</td>`+
+      `<td>${ok(sq.has(x.owner))}</td><td>${ok(sth.has(x.owner))}</td><td>${x.st}/5</td><td>${x.sb}枚</td><td>${x.ck}/9</td><td>${x.pt}回</td></tr>`).join("")+`</tbody></table></div>`;
+  $("out").innerHTML=h;
+  $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
+}
 async function load(){
   const pass=$("tpass").value.trim()||ss.get("bunko_tpass");
   if(!pass){ $("stat").textContent="合言葉を入れてください"; return; }
@@ -118,6 +134,8 @@ async function load(){
     if(r.status===401||r.status===403){ $("stat").textContent="合言葉がちがうようです"; return; }
     if(!r.ok) throw new Error(j.message||j.error||"読みこめませんでした");
     ss.set("bunko_tpass",pass); items=j.items||[];
+    try{ const r2=await fetch(API+"/bunko/oshipre/spells",{method:"POST",headers:{"Content-Type":"application/json","X-Teacher":encodeURIComponent(pass)},body:"{}"});
+      const j2=await r2.json().catch(()=>({})); students=r2.ok?(j2.items||[]):[]; }catch(e){ students=[]; }
     $("stat").textContent=`読みこみました（${when(Date.now())}）`; $("tabs").hidden=false; render();
   }catch(e){ $("stat").textContent=e.message; }
 }
