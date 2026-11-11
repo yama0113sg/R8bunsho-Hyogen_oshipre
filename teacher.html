@@ -70,8 +70,9 @@ async function copy(text){
   catch(e){ const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select(); try{document.execCommand("copy");}catch(_){} t.remove(); }
   toast("コピーしました");
 }
-const byWho=(a,b)=>(a.who.cls||"").localeCompare(b.who.cls||"","ja",{numeric:true})||(+a.who.no||0)-(+b.who.no||0);
-const whoText=w=>`${w.cls} ${w.no}番 ${w.name}`;
+const byWho=(a,b)=>(a.created||0)-(b.created||0);
+// 名前は集めない方針（送られてきたときだけ出す）
+const whoText=(w,i)=>(w&&w.name)?`${w.cls||""} ${w.no?w.no+"番 ":""}${w.name}`.trim():`提出 ${i+1}`;
 const when=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`;};
 let clips=[];
 const cp=text=>{ clips.push(text); return `<button type="button" class="cp" data-cp="${clips.length-1}">コピー</button>`; };
@@ -81,10 +82,10 @@ function render(){
   let h="";
   if(!list.length) h=`<p class="empty">まだ提出はありません。</p>`;
   else if(view==="q"){
-    const all=list.map(x=>`【${whoText(x.who)}】\n`+x.data.qs.map((q,i)=>`質問${i+1}（${TYPE[q.type]}）${q.text}`+(q.type!=="text"?"\n"+q.opts.map(o=>"・"+o).join("\n"):"")).join("\n")).join("\n\n");
+    const all=list.map((x,i)=>`【${whoText(x.who,i)}】\n`+x.data.qs.map((q,i)=>`質問${i+1}（${TYPE[q.type]}）${q.text}`+(q.type!=="text"?"\n"+q.opts.map(o=>"・"+o).join("\n"):"")).join("\n")).join("\n\n");
     h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(all)}<span class="meta">← 全員分を文字でまとめてコピー</span></div>`;
-    for(const x of list){
-      h+=`<div class="card"><div class="who">${esc(whoText(x.who))} <span class="meta">（${when(x.updated)}）</span></div>`;
+    list.forEach((x,xi)=>{
+      h+=`<div class="card"><div class="who">${esc(whoText(x.who,xi))} <span class="meta">（${when(x.updated)}）</span></div>`;
       x.data.qs.forEach((q,i)=>{
         h+=`<div class="q"><div><span class="type">${TYPE[q.type]}</span>質問${i+1}</div>`+
           `<div class="line"><span>${esc(q.text)}</span>${cp(q.text)}</div>`;
@@ -96,13 +97,13 @@ function render(){
         h+=`</div>`;
       });
       h+=`</div>`;
-    }
+    });
   }else{
-    const titles=list.map(x=>`${x.data.fttl}（${x.who.name}）`).join("\n");
-    const withIntro=list.map(x=>`${x.data.fttl}（${x.who.name}）${x.data.intro?"："+x.data.intro:""}`).join("\n");
+    const titles=list.map(x=>x.data.fttl).join("\n");
+    const withIntro=list.map(x=>`${x.data.fttl}${x.data.intro?"："+x.data.intro:""}`).join("\n");
     h+=`<div class="card row"><span>${list.length}人が提出</span>${cp(titles)}<span class="meta">タイトル一覧</span>${cp(withIntro)}<span class="meta">ひとこと紹介つき（1年生の視聴アンケートの選択肢に）</span></div>`;
-    h+=`<div class="card"><table><thead><tr><th>生徒</th><th>タイトル</th><th>テーマ</th><th>ひとこと紹介</th><th>1年生にどうなってほしいか</th></tr></thead><tbody>`+
-      list.map(x=>`<tr><td>${esc(whoText(x.who))}<div class="meta">${when(x.updated)}</div></td><td>${esc(x.data.fttl)}</td><td>${esc(x.data.fin)}</td><td>${esc(x.data.intro)}</td><td>${esc(x.data.who)}</td></tr>`).join("")+`</tbody></table></div>`;
+    h+=`<div class="card"><table><thead><tr><th>提出</th><th>タイトル</th><th>テーマ</th><th>ひとこと紹介</th><th>1年生にどうなってほしいか</th></tr></thead><tbody>`+
+      list.map((x,i)=>`<tr><td>${esc(whoText(x.who,i))}<div class="meta">${when(x.updated)}</div></td><td>${esc(x.data.fttl)}</td><td>${esc(x.data.fin)}</td><td>${esc(x.data.intro)}</td><td>${esc(x.data.who)}</td></tr>`).join("")+`</tbody></table></div>`;
   }
   $("out").innerHTML=h;
   $("out").querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",()=>copy(clips[+b.dataset.cp])));
